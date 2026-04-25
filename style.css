@@ -278,3 +278,91 @@ footer {
         grid-template-columns: 1fr;
     }
 }
+
+
+
+@media (max-width: 768px) {
+
+    header {
+        flex-direction: column;
+        padding: 15px 20px;
+    }
+
+    nav {
+        margin-top: 10px;
+    }
+
+    nav a {
+        margin: 8px;
+        font-size: 14px;
+    }
+
+    /* HERO */
+    .hero {
+        height: 75vh;
+        padding: 0 20px;
+        text-align: center;
+    }
+
+    .hero h2 {
+        font-size: 32px;
+        line-height: 1.2;
+    }
+
+    .hero p {
+        font-size: 15px;
+        margin-top: 10px;
+    }
+
+    .btn {
+        padding: 12px 20px;
+        font-size: 14px;
+    }
+
+    /* SECTIONS */
+    section {
+        padding: 70px 20px;
+    }
+
+    h2 {
+        font-size: 26px;
+    }
+
+    p {
+        font-size: 15px;
+    }
+
+    /* GRID → STACK */
+    .grid {
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .card {
+        padding: 18px;
+    }
+
+    .card img {
+        height: 180px;
+    }
+
+    /* GALERIJA */
+    .gallery {
+        grid-template-columns: 1fr;
+    }
+
+    .gallery img {
+        height: 200px;
+    }
+
+    /* O NAMA */
+    .o-nama p {
+        padding: 0 10px;
+    }
+
+    /* KONTAKT */
+    .kontakt {
+        padding: 60px 20px;
+    }
+
+}
