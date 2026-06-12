@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="hr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#171713">
+  <title>Admin prijava | GLAVAŠ KOP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="admin-body" data-page="admin-login">
+  <main class="login-shell">
+    <section class="login-brand">
+      <a class="brand light-brand" href="index.html"><span class="brand-mark">GK</span><span><strong>GLAVAŠ</strong><small>KOP</small></span></a>
+      <div><p class="eyebrow">VLASNIČKI PRISTUP</p><h1>Upravljanje sadržajem na jednom mjestu.</h1></div>
+      <p>Demo sučelje za pregled projekata, recenzija i sadržaja stranice.</p>
+    </section>
+    <section class="login-panel">
+      <form class="login-form" id="admin-login-form">
+        <p class="eyebrow dark">ADMIN PANEL</p>
+        <h2>Prijava vlasnika</h2>
+        <p class="login-intro">Ova lokalna verzija koristi demo prijavu. Za produkciju je potreban pravi sigurni backend.</p>
+        <label><span>Korisničko ime</span><input name="username" autocomplete="username" required placeholder="demo"></label>
+        <label><span>Lozinka</span><input name="password" type="password" autocomplete="current-password" required placeholder="demo"></label>
+        <p class="login-hint">Za pregled upišite <strong>demo</strong> / <strong>demo</strong>.</p>
+        <p class="login-error" id="login-error" role="alert"></p>
+        <button class="button button-dark full-button" type="submit">Prijavi se <span>↗</span></button>
+        <a class="back-link" href="index.html">← Povratak na javnu stranicu</a>
+      </form>
+    </section>
+  </main>
+  <script src="data/company-data.js"></script><script src="data/projects-data.js"></script><script src="data/reviews-data.js"></script><script src="script.js"></script><script src="admin.js"></script>
+</body>
+</html>

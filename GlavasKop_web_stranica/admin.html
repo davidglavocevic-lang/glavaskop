@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="hr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#171713">
+  <title>Admin | GLAVAŠ KOP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="admin-body" data-page="admin">
+  <div class="admin-shell">
+    <aside class="admin-sidebar">
+      <a class="brand light-brand" href="index.html"><span class="brand-mark">GK</span><span><strong>GLAVAŠ</strong><small>KOP</small></span></a>
+      <nav class="admin-nav" aria-label="Admin navigacija">
+        <button class="admin-nav-item active" data-admin-view="dashboard"><span>01</span>Pregled</button>
+        <button class="admin-nav-item" data-admin-view="projects"><span>02</span>Projekti</button>
+        <button class="admin-nav-item" data-admin-view="reviews"><span>03</span>Recenzije</button>
+        <button class="admin-nav-item" data-admin-view="content"><span>04</span>Podaci firme</button>
+      </nav>
+      <div class="admin-sidebar-footer">
+        <a href="index.html" target="_blank" rel="noopener">Otvori stranicu ↗</a>
+        <button id="admin-logout">Odjava</button>
+      </div>
+    </aside>
+    <main class="admin-main">
+      <header class="admin-topbar">
+        <button class="admin-menu-toggle" id="admin-menu-toggle" aria-label="Otvori admin izbornik">☰</button>
+        <div><small>GLAVAŠ KOP</small><strong>Upravljačka ploča</strong></div>
+        <span class="demo-badge">DEMO NAČIN</span>
+      </header>
+      <div class="admin-content">
+        <section class="admin-view active" id="admin-dashboard">
+          <div class="admin-title"><div><p class="eyebrow dark">DOBRO DOŠLI</p><h1>Pregled sadržaja</h1></div><p>Promjene u ovom demo panelu spremaju se samo u vaš preglednik.</p></div>
+          <div class="admin-stats" id="admin-stats"></div>
+          <div class="admin-dashboard-grid">
+            <section class="admin-card"><div class="admin-card-head"><h2>Nedavni projekti</h2><button data-go-view="projects">Upravljaj →</button></div><div id="admin-recent-projects"></div></section>
+            <section class="admin-card admin-notice"><span>VAŽNO</span><h2>Prije objave spojite pravi backend.</h2><p>Demo prijava i lokalna pohrana nisu zaštita za produkcijski admin. Koristite sigurnu autentikaciju i bazu podataka.</p></section>
+          </div>
+        </section>
+        <section class="admin-view" id="admin-projects">
+          <div class="admin-title"><div><p class="eyebrow dark">PORTFOLIO</p><h1>Projekti</h1></div><button class="button button-dark small-button" id="add-project">+ Novi projekt</button></div>
+          <div class="admin-toolbar"><label><span class="sr-only">Pretraži projekte</span><input id="admin-project-search" type="search" placeholder="Pretraži projekte..."></label></div>
+          <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Projekt</th><th>Kategorija</th><th>Lokacija</th><th>Status</th><th>Akcije</th></tr></thead><tbody id="admin-project-rows"></tbody></table></div>
+        </section>
+        <section class="admin-view" id="admin-reviews">
+          <div class="admin-title"><div><p class="eyebrow dark">DRUŠTVENI DOKAZ</p><h1>Recenzije</h1></div><span class="demo-badge dark-demo">5 DEMO ZAPISA</span></div>
+          <div class="admin-review-list" id="admin-review-list"></div>
+        </section>
+        <section class="admin-view" id="admin-content">
+          <div class="admin-title"><div><p class="eyebrow dark">CENTRALNI PODACI</p><h1>Podaci firme</h1></div></div>
+          <section class="admin-card content-guide"><h2>Jedno mjesto za izmjene</h2><p>Svi javni podaci firme nalaze se u datoteci <code>data/company-data.js</code>. U toj datoteci promijenite naziv, telefon, e-mail, tekstove, usluge i radno vrijeme.</p><div id="company-data-preview"></div></section>
+        </section>
+      </div>
+    </main>
+  </div>
+  <dialog class="admin-modal" id="project-modal">
+    <form method="dialog" id="project-form">
+      <div class="modal-head"><div><small>DEMO UREĐIVAČ</small><h2 id="project-modal-title">Novi projekt</h2></div><button class="modal-close" id="project-modal-close" type="button" aria-label="Zatvori">×</button></div>
+      <input type="hidden" name="id">
+      <div class="form-grid">
+        <label class="full"><span>Naslov</span><input name="title" required></label>
+        <label><span>Kategorija</span><select name="category"><option>Iskopi</option><option>Rušenja</option><option>Uređenje terena</option><option>Odvoz</option></select></label>
+        <label><span>Lokacija</span><input name="location" required></label>
+        <label class="full"><span>Kratki opis</span><textarea name="excerpt" rows="4" required></textarea></label>
+      </div>
+      <div class="modal-actions"><button class="button button-ghost" id="project-modal-cancel" type="button">Odustani</button><button class="button button-dark" type="submit">Spremi projekt</button></div>
+    </form>
+  </dialog>
+  <script src="data/company-data.js"></script><script src="data/projects-data.js"></script><script src="data/reviews-data.js"></script><script src="script.js"></script><script src="admin.js"></script>
+</body>
+</html>

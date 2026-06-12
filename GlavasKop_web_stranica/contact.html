@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="hr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Kontaktirajte GLAVAŠ KOP i zatražite procjenu zemljanih radova.">
+  <meta name="theme-color" content="#171713">
+  <title>Kontakt | GLAVAŠ KOP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="contact">
+  <a class="skip-link" href="#main">Preskoči na sadržaj</a>
+  <div id="site-header"></div>
+  <main id="main">
+    <section class="page-hero contact-hero">
+      <div class="container page-hero-grid">
+        <div><p class="eyebrow">KONTAKT</p><h1>Dobar projekt počinje dobrim pitanjima.</h1></div>
+        <p>Pošaljite lokaciju, vrstu radova i nekoliko fotografija. Odgovorit ćemo s konkretnim sljedećim korakom.</p>
+      </div>
+    </section>
+    <section class="section section-light">
+      <div class="container contact-layout">
+        <aside class="contact-sidebar">
+          <p class="eyebrow dark">IZRAVNO</p>
+          <a class="contact-link" data-phone-link href="#"><small>TELEFON</small><strong data-company="phone"></strong><span>↗</span></a>
+          <a class="contact-link" data-email-link href="#"><small>E-MAIL</small><strong data-company="email"></strong><span>↗</span></a>
+          <div class="contact-meta"><small>PODRUČJE RADA</small><strong data-company="serviceArea"></strong></div>
+          <div class="contact-meta"><small>RADNO VRIJEME</small><strong data-company="workingHours"></strong></div>
+          <div class="contact-note">Za precizniju prvu procjenu pripremite približne dimenzije i fotografije pristupa terenu.</div>
+        </aside>
+        <form class="contact-form" id="contact-form" novalidate>
+          <div class="form-heading"><span>UPIT ZA PROCJENU</span><strong>01 / 01</strong></div>
+          <div class="form-grid">
+            <label><span>Ime i prezime *</span><input name="name" type="text" autocomplete="name" required><small class="field-error"></small></label>
+            <label><span>Telefon *</span><input name="phone" type="tel" autocomplete="tel" required><small class="field-error"></small></label>
+            <label><span>E-mail</span><input name="email" type="email" autocomplete="email"><small class="field-error"></small></label>
+            <label><span>Lokacija radova *</span><input name="location" type="text" required><small class="field-error"></small></label>
+            <label class="full"><span>Vrsta radova *</span><select name="service" required><option value="">Odaberite uslugu</option><option>Iskopi i priprema terena</option><option>Rušenja i uklanjanje</option><option>Ravnanje i uređenje</option><option>Odvoz i dovoz materijala</option><option>Drugo</option></select><small class="field-error"></small></label>
+            <label class="full"><span>Opišite projekt *</span><textarea name="message" rows="6" placeholder="Približne dimenzije, stanje terena, pristup stroju i željeni termin..." required></textarea><small class="field-error"></small></label>
+          </div>
+          <div class="form-footer">
+            <p>Slanjem obrasca pristajete da vas kontaktiramo u vezi ovog upita.</p>
+            <button class="button button-dark" type="submit">Pošaljite upit <span>↗</span></button>
+          </div>
+          <div class="form-success" id="form-success" role="status" hidden>
+            <strong>Upit je pripremljen.</strong>
+            <p>Otvoren je vaš e-mail program s popunjenim podacima. Ako se nije otvorio, javite nam se telefonom.</p>
+          </div>
+        </form>
+      </div>
+    </section>
+  </main>
+  <div id="site-footer"></div>
+  <script src="data/company-data.js"></script><script src="data/projects-data.js"></script><script src="data/reviews-data.js"></script><script src="script.js"></script>
+</body>
+</html>
