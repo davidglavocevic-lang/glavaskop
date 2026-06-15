@@ -88,6 +88,7 @@
     <div class="handbook-start">
       <strong>Najvažnije pravilo</strong>
       <p><b>Web stranica</b> upravlja javnim sadržajem koji vide posjetitelji. <b>Organizer</b> sadrži privatne poslovne podatke koji se nikada ne prikazuju javno.</p>
+      <p><b>Redoslijed za obračun radnika:</b> dodaj radnika i satnicu → dodaj interni projekt → unesi dnevne radne sate → evidentiraj stvarnu isplatu.</p>
     </div>
     <div class="handbook-sections">
       <details open>
@@ -136,7 +137,8 @@
         <div>
           <ul>
             <li>Prikazuje aktivne projekte, termine, radnike, zaradu i isplate.</li>
-            <li>Brojevi ovise o ispravno unesenim projektima, radnicima i isplatama.</li>
+            <li><b>Zarađeno ovaj mjesec</b> računa se iz dnevnih sati i spremljenih satnica ili iz fiksno dogovorenih iznosa.</li>
+            <li><b>Još za isplatiti</b> predstavlja razliku između zarađenog i evidentiranih isplata u mjesecu.</li>
             <li>Koristi pregled za brzu kontrolu, a detalje uređuj u odgovarajućem modulu.</li>
           </ul>
         </div>
@@ -156,21 +158,41 @@
         <summary><span>07</span> Radnici</summary>
         <div>
           <ul>
-            <li>Prvo dodaj radnika, zatim ga poveži s internim projektom.</li>
-            <li>Satnica se koristi za izračun ako na projektu nije unesen dogovoreni iznos.</li>
+            <li>Kod dodavanja radnika unesi ime, ulogu, kontakt i njegovu trenutnu satnicu.</li>
+            <li>Satnica se koristi za nove dnevne zapise. Već spremljeni dani zadržavaju staru satnicu radi točnog obračuna.</li>
+            <li>Radnika zatim poveži s internim projektom ili ga jednostavno odaberi pri dnevnom unosu sati.</li>
+            <li>Tablica prikazuje sate, zarađeno, isplaćeno i preostali iznos za tekući mjesec.</li>
             <li>Radnika s postojećom evidencijom radije deaktiviraj nego briši.</li>
           </ul>
+          <p class="handbook-warning">Prije prvog unosa sati provjeri satnicu. Promjena satnice ne mijenja već spremljene dane.</p>
         </div>
       </details>
       <details>
         <summary><span>08</span> Radni sati</summary>
         <div>
+          <p><b>Svakodnevni unos:</b></p>
           <ul>
-            <li>Odaberi datum i projekt, zatim upiši sate svim radnicima koji su taj dan radili.</li>
-            <li>Možeš koristiti četvrtine sata, primjerice 7,25 ili 7,5 sati.</li>
-            <li>Zarada se automatski računa prema satnici spremljenoj uz taj dan.</li>
+            <li>Otvori <b>Radni sati</b> i prvo odaberi stvarni datum rada.</li>
+            <li>Odaberi interni projekt na kojem je ekipa radila.</li>
+            <li>Uz svakog radnika upiši broj sati. Prazno polje ili 0 znači da taj radnik taj dan nije radio na projektu.</li>
+            <li>Možeš unositi četvrtine sata: 7,25 znači 7 sati i 15 minuta, a 7,5 znači 7 sati i 30 minuta.</li>
+            <li>Po potrebi dodaj kratku napomenu, primjerice vrstu posla, kašnjenje ili rad na drugoj lokaciji.</li>
+            <li>Klikni <b>Spremi sate za ovaj dan</b>. Jednim spremanjem ažuriraju se svi radnici na odabranom projektu.</li>
           </ul>
-          <p class="handbook-warning">Sate upisuj po stvarnom datumu rada jer oni izravno utječu na iznos za isplatu.</p>
+          <p><b>Ispravak i kontrola:</b></p>
+          <ul>
+            <li>Za ispravak pronađi zapis u tablici i klikni <b>Uredi dan</b>. Otvorit će se isti datum i projekt.</li>
+            <li>Promijeni sate i ponovno spremi. Ako upišeš 0 ili obrišeš vrijednost, postojeći zapis tog radnika za taj dan se uklanja.</li>
+            <li>Gumb <b>Briši</b> uklanja samo odabrani dnevni zapis nakon potvrde.</li>
+            <li>Kartice iznad obrasca prikazuju ukupne sate i zaradu za odabrani dan i mjesec.</li>
+          </ul>
+          <p><b>Obračun:</b></p>
+          <ul>
+            <li>Zarada se računa kao broj sati × satnica spremljena uz taj dnevni zapis.</li>
+            <li>Ako projekt za radnika ima <b>fiksni dogovoreni iznos</b>, sati se vode radi evidencije, ali se ne dodaju ponovno na zaradu.</li>
+            <li>Dnevni sati automatski se zbrajaju i prikazuju unutar internog projekta.</li>
+          </ul>
+          <p class="handbook-warning">Sate uvijek upisuj na točan datum i projekt. Pogrešan datum ili projekt mijenja mjesečnu zaradu i iznos koji još treba isplatiti.</p>
         </div>
       </details>
       <details>
@@ -179,6 +201,9 @@
           <ul>
             <li>Sadrže privatne cijene, mjere, radnike, troškove, slike i napomene.</li>
             <li>Dužina × širina daje površinu, a uz dubinu se računa volumen iskopa.</li>
+            <li>Kod povezivanja radnika ostavi dogovoreni iznos 0 ako se plaća prema dnevnim satima i satnici.</li>
+            <li>Upiši fiksni dogovoreni iznos samo ako radnik za cijeli projekt dobiva unaprijed dogovorenu svotu.</li>
+            <li>Ukupni sati uz radnika automatski dolaze iz dnevne evidencije.</li>
             <li>Status redovito promijeni u Planirano, Aktivno, Završeno ili Plaćeno.</li>
           </ul>
           <p class="handbook-warning">Interni projekt nije isto što i projekt za javnu web stranicu.</p>
@@ -188,10 +213,13 @@
         <summary><span>10</span> Isplate</summary>
         <div>
           <ul>
+            <li>Prije isplate provjeri stupce <b>Zarađeno</b>, <b>Isplaćeno</b> i <b>Još za platiti</b> u dijelu Radnici.</li>
             <li>Isplatu evidentiraj tek kada je stvarno izvršena.</li>
             <li>Možeš je povezati s projektom ili ostaviti kao opću isplatu.</li>
             <li>Prije spremanja provjeri radnika, iznos i datum.</li>
+            <li>Ispravak radnih sati automatski mijenja zaradu, ali ne mijenja već unesenu isplatu.</li>
           </ul>
+          <p class="handbook-warning">Unos isplate ne stvara radne sate. Najprije evidentiraj sate, zatim stvarno isplaćeni iznos.</p>
         </div>
       </details>
       <details>
