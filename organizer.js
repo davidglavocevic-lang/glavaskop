@@ -25,6 +25,7 @@
     employees: [],
     projects: [],
     workers: [],
+    workHours: [],
     payments: [],
     expenses: [],
     files: [],
@@ -119,15 +120,30 @@
 
   function earnedForEmployee(employee, currentMonthOnly = false) {
     const { start, end } = monthBounds(new Date());
-    return state.workers
+    const hourlyEarnings = state.workHours
       .filter((item) => item.employee_id === employee.id)
+      .filter((item) => {
+        if (!currentMonthOnly) return true;
+        const date = new Date(`${item.work_date}T12:00:00`);
+        return date >= start && date < end;
+      })
+      .filter((item) => !state.workers.some((worker) =>
+        worker.employee_id === item.employee_id &&
+        worker.project_id === item.project_id &&
+        Number(worker.agreed_amount) > 0
+      ))
+      .reduce((total, item) => total + Number(item.hours) * Number(item.hourly_rate), 0);
+    const fixedEarnings = state.workers
+      .filter((item) => item.employee_id === employee.id)
+      .filter((item) => Number(item.agreed_amount) > 0)
       .filter((item) => {
         if (!currentMonthOnly) return true;
         const project = getProject(item.project_id);
         const date = new Date(project?.start_date || project?.created_at || 0);
         return date >= start && date < end;
       })
-      .reduce((total, item) => total + Number(item.agreed_amount || Number(item.hours_worked || 0) * Number(employee.hourly_rate || 0)), 0);
+      .reduce((total, item) => total + Number(item.agreed_amount), 0);
+    return hourlyEarnings + fixedEarnings;
   }
 
   function paidForEmployee(employee, currentMonthOnly = false) {
@@ -142,6 +158,34 @@
       .reduce((total, item) => total + Number(item.amount || 0), 0);
   }
 
+  function workHoursForEmployee(employeeId, currentMonthOnly = false) {
+    const { start, end } = monthBounds(new Date());
+    return state.workHours
+      .filter((item) => item.employee_id === employeeId)
+      .filter((item) => {
+        if (!currentMonthOnly) return true;
+        const date = new Date(`${item.work_date}T12:00:00`);
+        return date >= start && date < end;
+      })
+      .reduce((total, item) => total + Number(item.hours), 0);
+  }
+
+  function projectWorkerEarnings(worker) {
+    if (Number(worker.agreed_amount) > 0) return Number(worker.agreed_amount);
+    return state.workHours
+      .filter((item) => item.employee_id === worker.employee_id && item.project_id === worker.project_id)
+      .reduce((total, item) => total + Number(item.hours) * Number(item.hourly_rate), 0);
+  }
+
+  function workHourEarning(item) {
+    const fixedAgreement = state.workers.some((worker) =>
+      worker.employee_id === item.employee_id &&
+      worker.project_id === item.project_id &&
+      Number(worker.agreed_amount) > 0
+    );
+    return fixedAgreement ? 0 : Number(item.hours) * Number(item.hourly_rate);
+  }
+
   async function loadAll() {
     const queries = [
       ["websiteSettings", client.from("website_settings").select("data").eq("id", "company").single()],
@@ -149,6 +193,7 @@
       ["employees", client.from("employees").select("*").order("active", { ascending: false }).order("name")],
       ["projects", client.from("internal_projects").select("*").order("created_at", { ascending: false })],
       ["workers", client.from("project_workers").select("*").order("created_at", { ascending: false })],
+      ["workHours", client.from("employee_work_hours").select("*").order("work_date", { ascending: false }).order("created_at", { ascending: false })],
       ["payments", client.from("employee_payments").select("*").order("paid_at", { ascending: false })],
       ["expenses", client.from("expenses").select("*").order("expense_date", { ascending: false })],
       ["files", client.from("project_files").select("*").order("created_at", { ascending: false })],
@@ -631,9 +676,9 @@
 
   function renderEmployees() {
     app.innerHTML = pageHead("MITARBEITER / RADNICI", "Radnici", "Satnice, angažmani, zarada i isplate po radniku.",
-      '<button class="button button-dark" data-action="new-employee">+ Dodaj radnika</button>') +
+      '<a class="button button-ghost" data-route="/admin/organizer/radni-sati" href="/admin/organizer/radni-sati">Upiši radne sate</a><button class="button button-dark" data-action="new-employee">+ Dodaj radnika</button>') +
       `<div class="org-toolbar"><input type="search" id="employee-search" placeholder="Pretraži radnike…"><select id="employee-status"><option value="">Svi statusi</option><option value="active">Aktivni</option><option value="inactive">Neaktivni</option></select></div>
-      <div class="org-table-wrap"><table class="org-table"><thead><tr><th>Radnik</th><th>Kontakt / uloga</th><th>Satnica</th><th>Zarađeno ovaj mjesec</th><th>Isplaćeno</th><th>Još za platiti</th><th>Projekti</th><th>Akcije</th></tr></thead><tbody id="employee-rows"></tbody></table></div>`;
+      <div class="org-table-wrap"><table class="org-table"><thead><tr><th>Radnik</th><th>Kontakt / uloga</th><th>Satnica</th><th>Sati ovaj mjesec</th><th>Zarađeno ovaj mjesec</th><th>Isplaćeno</th><th>Još za platiti</th><th>Projekti</th><th>Akcije</th></tr></thead><tbody id="employee-rows"></tbody></table></div>`;
     drawEmployeeRows();
   }
 
@@ -650,16 +695,17 @@
     target.innerHTML = rows.length ? rows.map((employee) => {
       const earned = earnedForEmployee(employee, true);
       const paid = paidForEmployee(employee, true);
+      const monthHours = workHoursForEmployee(employee.id, true);
       const projectCount = new Set(state.workers.filter((item) => item.employee_id === employee.id).map((item) => item.project_id)).size;
       return `<tr>
         <td><strong>${esc(employee.name)}</strong><br>${employee.active ? statusBadge("active") : '<span class="status-badge status-cancelled">Neaktivan</span>'}</td>
         <td>${esc(employee.role || "Nije uneseno")}<br><small>${esc(employee.phone || "Bez telefona")}</small></td>
         <td>${currency.format(employee.hourly_rate || 0)}</td>
-        <td>${currency.format(earned)}</td><td>${currency.format(paid)}</td><td><strong>${currency.format(Math.max(earned - paid, 0))}</strong></td>
+        <td>${number.format(monthHours)} h</td><td>${currency.format(earned)}</td><td>${currency.format(paid)}</td><td><strong>${currency.format(Math.max(earned - paid, 0))}</strong></td>
         <td>${projectCount}</td>
         <td><div class="org-table-actions"><button class="org-icon-button" data-edit-employee="${employee.id}">Uredi</button><button class="org-icon-button" data-toggle-employee="${employee.id}">${employee.active ? "Deaktiviraj" : "Aktiviraj"}</button><button class="org-icon-button danger" data-delete-employee="${employee.id}">Briši</button></div></td>
       </tr>`;
-    }).join("") : `<tr><td colspan="8">${empty("Nema radnika za odabrani filter.")}</td></tr>`;
+    }).join("") : `<tr><td colspan="9">${empty("Nema radnika za odabrani filter.")}</td></tr>`;
   }
 
   function employeeModal(employee) {
@@ -686,6 +732,105 @@
         if (error) throw error;
       }
     });
+  }
+
+  function renderWorkHours(selectedDate = isoDate(new Date()), selectedProjectId = "") {
+    const availableProjects = state.projects.filter((item) => item.status !== "cancelled");
+    const projectId = selectedProjectId || availableProjects.find((item) => item.status === "active")?.id || availableProjects[0]?.id || "";
+    const existing = state.workHours.filter((item) => item.work_date === selectedDate && item.project_id === projectId);
+    const employeeIds = new Set(existing.map((item) => item.employee_id));
+    const team = state.employees.filter((employee) => employee.active || employeeIds.has(employee.id));
+    const dayHours = existing.reduce((sum, item) => sum + Number(item.hours), 0);
+    const dayAmount = existing.reduce((sum, item) => sum + workHourEarning(item), 0);
+    const monthHours = state.workHours.filter((item) => item.work_date.slice(0, 7) === selectedDate.slice(0, 7)).reduce((sum, item) => sum + Number(item.hours), 0);
+    const monthAmount = state.workHours.filter((item) => item.work_date.slice(0, 7) === selectedDate.slice(0, 7)).reduce((sum, item) => sum + workHourEarning(item), 0);
+
+    app.innerHTML = pageHead(
+      "DNEVNA EVIDENCIJA",
+      "Radni sati",
+      "Odaberi datum i projekt, unesi sate cijeloj ekipi i spremi sve odjednom.",
+      '<a class="button button-ghost" data-route="/admin/organizer/isplate" href="/admin/organizer/isplate">Pregled isplata</a>'
+    ) +
+      `<div class="org-grid work-hours-stats">
+        ${stat(`${number.format(dayHours)} h`, "Sati za odabrani dan", true)}
+        ${stat(currency.format(dayAmount), "Zarada po satnici za dan")}
+        ${stat(`${number.format(monthHours)} h`, "Sati u odabranom mjesecu")}
+        ${stat(currency.format(monthAmount), "Zarada po satima u mjesecu")}
+      </div>
+      <form class="org-card work-hours-entry" id="work-hours-form">
+        <div class="work-hours-controls">
+          <label><span>Datum rada</span><input type="date" name="work_date" value="${esc(selectedDate)}" required></label>
+          <label><span>Projekt</span><select name="project_id" required><option value="">Odaberi projekt</option>${availableProjects.map((project) => `<option value="${project.id}" ${project.id === projectId ? "selected" : ""}>${esc(project.title)} · ${esc(project.location || "bez lokacije")}</option>`).join("")}</select></label>
+        </div>
+        ${!availableProjects.length ? empty("Prvo dodaj interni projekt.") : !team.length ? empty("Prvo dodaj aktivnog radnika.") : `
+          <div class="work-hours-team">
+            <div class="work-hours-row work-hours-heading"><span>Radnik</span><span>Satnica</span><span>Sati</span><span>Napomena</span><span>Iznos</span></div>
+            ${team.map((employee) => {
+              const record = existing.find((item) => item.employee_id === employee.id);
+              const rate = Number(record?.hourly_rate ?? employee.hourly_rate ?? 0);
+              const fixedAgreement = state.workers.some((worker) => worker.employee_id === employee.id && worker.project_id === projectId && Number(worker.agreed_amount) > 0);
+              return `<div class="work-hours-row">
+                <span><strong>${esc(employee.name)}</strong><small>${esc(employee.role || "Radnik")}</small></span>
+                <span>${currency.format(rate)}</span>
+                <label><span class="mobile-field-label">Sati</span><input type="number" name="hours_${employee.id}" value="${record ? Number(record.hours) : ""}" min="0" max="24" step="0.25" inputmode="decimal" placeholder="0"></label>
+                <label><span class="mobile-field-label">Napomena</span><input type="text" name="note_${employee.id}" value="${esc(record?.note || "")}" placeholder="Opcionalno"></label>
+                <strong data-work-amount="${employee.id}" data-fixed-agreement="${fixedAgreement}">${fixedAgreement ? "Fiksni dogovor" : currency.format(Number(record?.hours || 0) * rate)}</strong>
+              </div>`;
+            }).join("")}
+          </div>
+          <div class="work-hours-save"><p>Upiši 0 ili ostavi prazno za radnika koji taj dan nije radio na odabranom projektu.</p><button class="button button-dark" type="submit">Spremi sate za ovaj dan</button></div>`}
+      </form>
+      <section class="org-card work-hours-history">
+        <div class="org-card-head"><h2>Zadnji uneseni sati</h2></div>
+        <div class="org-table-wrap"><table class="org-table"><thead><tr><th>Datum</th><th>Radnik</th><th>Projekt</th><th>Sati</th><th>Satnica</th><th>Zarada</th><th>Napomena</th><th>Akcije</th></tr></thead><tbody>${
+          state.workHours.slice(0, 100).map((item) => `<tr>
+            <td>${dateFormatter.format(new Date(`${item.work_date}T12:00:00`))}</td>
+            <td><strong>${esc(getEmployee(item.employee_id)?.name || "Radnik")}</strong></td>
+            <td>${esc(getProject(item.project_id)?.title || "Projekt")}</td>
+            <td>${number.format(item.hours)} h</td><td>${currency.format(item.hourly_rate)}</td>
+            <td><strong>${workHourEarning(item) ? currency.format(workHourEarning(item)) : "Fiksni dogovor"}</strong></td>
+            <td>${esc(item.note || "—")}</td>
+            <td><div class="org-table-actions"><button class="org-icon-button" data-edit-work-hours="${item.id}">Uredi dan</button><button class="org-icon-button danger" data-delete-work-hours="${item.id}">Briši</button></div></td>
+          </tr>`).join("") || `<tr><td colspan="8">${empty("Još nema dnevno evidentiranih sati.")}</td></tr>`
+        }</tbody></table></div>
+      </section>`;
+  }
+
+  async function saveWorkHours(form) {
+    const data = new FormData(form);
+    const workDate = String(data.get("work_date"));
+    const projectId = String(data.get("project_id"));
+    if (!projectId) throw new Error("Odaberi projekt.");
+    const existing = state.workHours.filter((item) => item.work_date === workDate && item.project_id === projectId);
+    const upserts = [];
+    const deleteIds = [];
+    state.employees.forEach((employee) => {
+      const hours = Number(data.get(`hours_${employee.id}`) || 0);
+      const record = existing.find((item) => item.employee_id === employee.id);
+      if (hours > 0) {
+        upserts.push({
+          employee_id: employee.id,
+          project_id: projectId,
+          work_date: workDate,
+          hours,
+          hourly_rate: record ? Number(record.hourly_rate) : Number(employee.hourly_rate || 0),
+          note: formValue(data, `note_${employee.id}`) || null
+        });
+      } else if (record) {
+        deleteIds.push(record.id);
+      }
+    });
+    if (upserts.length) {
+      const { error } = await client.from("employee_work_hours").upsert(upserts, { onConflict: "employee_id,project_id,work_date" });
+      if (error) throw error;
+    }
+    if (deleteIds.length) {
+      const { error } = await client.from("employee_work_hours").delete().in("id", deleteIds);
+      if (error) throw error;
+    }
+    await loadAll();
+    toast("Radni sati i zarada su ažurirani.");
+    renderWorkHours(workDate, projectId);
   }
 
   function renderProjects() {
@@ -862,8 +1007,8 @@
             <p><strong>Interne napomene</strong><br>${esc(project.extra_info || "Nema dodatnih napomena.")}</p>
           </section>
           <section class="org-card" style="margin-top:1.2rem">
-            <div class="org-card-head"><h2>Radnici</h2><button class="org-icon-button" data-add-worker="${project.id}">+ Poveži</button></div>
-            <div class="org-list">${workers.length ? workers.map((item) => `<div class="org-list-item"><span><strong>${esc(getEmployee(item.employee_id)?.name || "Radnik")}</strong><small>${number.format(item.hours_worked)} h · ${esc(item.note || "")}</small></span><span><strong>${currency.format(item.agreed_amount || Number(item.hours_worked) * Number(getEmployee(item.employee_id)?.hourly_rate || 0))}</strong><button class="org-icon-button danger" data-remove-worker="${item.id}">×</button></span></div>`).join("") : empty("Nema povezanih radnika.")}</div>
+            <div class="org-card-head"><h2>Radnici</h2><div class="org-actions"><a class="org-icon-button" data-route="/admin/organizer/radni-sati" href="/admin/organizer/radni-sati">Upiši sate</a><button class="org-icon-button" data-add-worker="${project.id}">+ Poveži</button></div></div>
+            <div class="org-list">${workers.length ? workers.map((item) => `<div class="org-list-item"><span><strong>${esc(getEmployee(item.employee_id)?.name || "Radnik")}</strong><small>${number.format(item.hours_worked)} h · ${esc(item.note || "")}</small></span><span><strong>${currency.format(projectWorkerEarnings(item))}</strong><button class="org-icon-button danger" data-remove-worker="${item.id}">×</button></span></div>`).join("") : empty("Nema povezanih radnika.")}</div>
           </section>
           ${listPanel("Termini projekta", events.slice(0, 5).map((item) => [item.title, dateTimeFormatter.format(new Date(item.start_time)), eventTypeLabel[item.type]]), "Nema povezanih termina.")}
           ${listPanel("Financije", [["Isplate", `${projectPayments.length} zapisa`, currency.format(projectPayments.reduce((sum, item) => sum + Number(item.amount), 0))], ["Troškovi", `${projectExpenses.length} zapisa`, currency.format(projectExpenses.reduce((sum, item) => sum + Number(item.amount), 0))]], "")}
@@ -886,14 +1031,14 @@
       title: "Poveži radnika s projektom",
       fields:
         field("Radnik", "employee_id", available[0].id, { type: "select", full: true, choices: available.map((item) => [item.id, `${item.name} · ${item.role || "radnik"}`]) }) +
-        field("Odrađeni sati", "hours_worked", 0, { type: "number", min: 0, step: "0.25" }) +
         field("Dogovoreni iznos (€)", "agreed_amount", 0, { type: "number", min: 0, step: "0.01" }) +
-        field("Napomena", "note", "", { type: "textarea", full: true }),
+        field("Napomena", "note", "", { type: "textarea", full: true }) +
+        '<div class="website-upload-note full"><strong>Radni sati</strong><span>Nakon povezivanja sate upisuješ po danima u modulu “Radni sati”. Dogovoreni iznos ostavi 0 ako se zarada računa prema satnici.</span></div>',
       submit: async (data) => {
         const { error } = await client.from("project_workers").insert({
           project_id: projectId,
           employee_id: data.get("employee_id"),
-          hours_worked: Number(data.get("hours_worked") || 0),
+          hours_worked: 0,
           agreed_amount: Number(data.get("agreed_amount") || 0),
           note: formValue(data, "note") || null
         });
@@ -1392,6 +1537,7 @@
     if (detailMatch) return renderProjectDetail(detailMatch[1]);
     if (path.startsWith("/admin/organizer/kalendar")) return renderCalendar();
     if (path.startsWith("/admin/organizer/mitarbeiter")) return renderEmployees();
+    if (path.startsWith("/admin/organizer/radni-sati")) return renderWorkHours();
     if (path.startsWith("/admin/organizer/projekte")) return renderProjects();
     if (path.startsWith("/admin/organizer/isplate")) return renderPayments();
     if (path.startsWith("/admin/organizer/nacrti")) return renderFiles();
@@ -1449,12 +1595,26 @@
     const addWorker = event.target.closest("[data-add-worker]");
     if (addWorker) return workerModal(addWorker.dataset.addWorker);
     const removeWorker = event.target.closest("[data-remove-worker]");
-    if (removeWorker) return removeRecord("project_workers", removeWorker.dataset.removeWorker, "povezanog radnika");
+    if (removeWorker) {
+      const worker = state.workers.find((item) => item.id === removeWorker.dataset.removeWorker);
+      return removeRecord("project_workers", removeWorker.dataset.removeWorker, "povezanog radnika i njegovu evidenciju sati na ovom projektu", async () => {
+        if (!worker) return;
+        const { error } = await client.from("employee_work_hours").delete().eq("employee_id", worker.employee_id).eq("project_id", worker.project_id);
+        if (error) throw error;
+      });
+    }
 
     const editPayment = event.target.closest("[data-edit-payment]");
     if (editPayment) return paymentModal(state.payments.find((item) => item.id === editPayment.dataset.editPayment));
     const deletePayment = event.target.closest("[data-delete-payment]");
     if (deletePayment) return removeRecord("employee_payments", deletePayment.dataset.deletePayment, "isplatu");
+    const editWorkHours = event.target.closest("[data-edit-work-hours]");
+    if (editWorkHours) {
+      const item = state.workHours.find((record) => record.id === editWorkHours.dataset.editWorkHours);
+      if (item) return renderWorkHours(item.work_date, item.project_id);
+    }
+    const deleteWorkHours = event.target.closest("[data-delete-work-hours]");
+    if (deleteWorkHours) return removeRecord("employee_work_hours", deleteWorkHours.dataset.deleteWorkHours, "evidenciju radnih sati");
     const editExpense = event.target.closest("[data-edit-expense]");
     if (editExpense) return expenseModal(state.expenses.find((item) => item.id === editExpense.dataset.editExpense));
     const deleteExpense = event.target.closest("[data-delete-expense]");
@@ -1488,14 +1648,42 @@
     if (event.target.id === "website-project-search") drawWebsiteProjectRows();
     if (event.target.id === "employee-search") drawEmployeeRows();
     if (event.target.id === "project-search") drawProjectRows();
+    if (event.target.name?.startsWith("hours_")) {
+      const employeeId = event.target.name.replace("hours_", "");
+      const employee = getEmployee(employeeId);
+      const existing = state.workHours.find((item) =>
+        item.employee_id === employeeId &&
+        item.work_date === event.target.form?.elements.work_date.value &&
+        item.project_id === event.target.form?.elements.project_id.value
+      );
+      const rate = Number(existing?.hourly_rate ?? employee?.hourly_rate ?? 0);
+      const target = document.querySelector(`[data-work-amount="${employeeId}"]`);
+      if (target && target.dataset.fixedAgreement !== "true") target.textContent = currency.format(Number(event.target.value || 0) * rate);
+    }
   });
   document.addEventListener("change", (event) => {
     if (event.target.id === "website-project-category") drawWebsiteProjectRows();
     if (event.target.id === "employee-status") drawEmployeeRows();
     if (event.target.id === "project-status") drawProjectRows();
+    if (event.target.form?.id === "work-hours-form" && ["work_date", "project_id"].includes(event.target.name)) {
+      renderWorkHours(event.target.form.elements.work_date.value, event.target.form.elements.project_id.value);
+    }
   });
 
   document.addEventListener("submit", async (event) => {
+    if (event.target.id === "work-hours-form") {
+      event.preventDefault();
+      const button = event.target.querySelector('button[type="submit"]');
+      if (!button) return;
+      button.disabled = true;
+      try {
+        await saveWorkHours(event.target);
+      } catch (error) {
+        fail(error, "Radne sate nije moguće spremiti.");
+        button.disabled = false;
+      }
+      return;
+    }
     if (event.target.id !== "website-content-form") return;
     event.preventDefault();
     const button = event.target.querySelector('button[type="submit"]');

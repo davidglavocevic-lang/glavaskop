@@ -34,6 +34,7 @@ supabase/migrations/
 - `internal_projects`
 - `project_workers`
 - `employee_payments`
+- `employee_work_hours`
 - `expenses`
 - `project_files`
 - `calendar_events`
@@ -117,6 +118,7 @@ npx web-push generate-vapid-keys
 /admin/organizer
 /admin/organizer/kalendar
 /admin/organizer/mitarbeiter
+/admin/organizer/radni-sati
 /admin/organizer/projekte
 /admin/organizer/projekte/{id}
 /admin/organizer/isplate
@@ -137,6 +139,10 @@ npx web-push generate-vapid-keys
 Adresu, OIB i ostale podatke mijenjajte kroz admin bez izmjene koda.
 
 Javni projekti i demo recenzije ostaju odvojeni od privatnih Organizer podataka. Javna stranica ne dohvaća nijednu Organizer tablicu.
+
+## Dnevna evidencija radnih sati
+
+Ruta `/admin/organizer/radni-sati` omogućuje unos sati za više radnika po datumu i projektu. Svaki zapis čuva satnicu koja je vrijedila na dan unosa. Zarada se računa iz dnevnih sati, dok dogovoreni fiksni iznos na projektu ima prednost i ne zbraja se dvaput.
 
 ## Deploy
 
