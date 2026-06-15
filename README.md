@@ -21,10 +21,10 @@ npm run check
 
 Koristi se postojeći projekt **GLAVASKOP Test(Web+Org)**. Ne kreirati novi Supabase projekt.
 
-1. U Supabase SQL Editoru pokrenite migraciju:
+1. Primijenite sve migracije iz direktorija:
 
 ```text
-supabase/migrations/20260615180000_glavaskop_organizer.sql
+supabase/migrations/
 ```
 
 2. Migracija kreira:
@@ -40,6 +40,8 @@ supabase/migrations/20260615180000_glavaskop_organizer.sql
 - `calendar_reminders`
 - `holidays`
 - `push_subscriptions`
+- `website_projects`
+- `website_settings`
 
 3. Migracija uključuje RLS na svim privatnim tablicama. Pristup imaju samo prijavljeni korisnici čiji je `profiles.role` jednak `owner` ili `admin`.
 4. Postojeći Supabase korisnik s e-mailom `davidglavocevic@gmail.com` automatski dobiva ulogu `owner`. Ako vlasnički Auth korisnik koristi drugu adresu, u SQL Editoru promijenite njegov profil:
@@ -63,6 +65,10 @@ Migracija kreira privatni bucket `private-project-files` i Storage policies za o
 - PDF limit je 20 MB.
 
 Slike se prije uploada u browseru smanjuju na najviše 2000 px, pretvaraju u WebP kada je podržan i spremaju s kvalitetom `0.75`. U `project_files` se spremaju originalna i komprimirana veličina.
+
+## Public Website Storage
+
+Bucket `public-website-images` sadrži javne naslovne i galerijske fotografije web projekata te fotografije mehanizacije. Upload, zamjena i brisanje rade kroz admin, a pisanje je dopušteno samo owner/admin korisnicima.
 
 ## Vercel environment variables
 
@@ -120,13 +126,15 @@ npx web-push generate-vapid-keys
 
 ## Podaci javne stranice
 
-- Podaci firme, kontakt i usluge: `data/company-data.js`
+- Podaci firme, kontakt, usluge i mehanizacija: Supabase `website_settings`, uređivanje na `/admin/web/sadrzaj`
 - Javni projekti: Supabase tablica `website_projects`, uređivanje na `/admin/web/projekti`
+- Javne fotografije: Supabase Storage bucket `public-website-images`
+- `data/company-data.js` ostaje fallback ako Supabase privremeno nije dostupan
 - `data/projects-data.js` ostaje fallback ako Supabase privremeno nije dostupan
 - Demo recenzije: `data/reviews-data.js`
 - Fotografije: `images/`
 
-Vrijednosti `DODATI_STVARNU_ADRESU` i `DODATI_STVARNI_OIB` treba zamijeniti stvarnim podacima.
+Adresu, OIB i ostale podatke mijenjajte kroz admin bez izmjene koda.
 
 Javni projekti i demo recenzije ostaju odvojeni od privatnih Organizer podataka. Javna stranica ne dohvaća nijednu Organizer tablicu.
 

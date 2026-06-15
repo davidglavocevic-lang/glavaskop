@@ -38,7 +38,28 @@
     }
   }
 
+  async function loadCompanySettings() {
+    try {
+      const configResponse = await fetch("/api/config");
+      if (!configResponse.ok) return;
+      const config = await configResponse.json();
+      const response = await fetch(
+        `${config.supabaseUrl}/rest/v1/website_settings?id=eq.company&select=data`,
+        { headers: { apikey: config.supabaseAnonKey } }
+      );
+      if (!response.ok) return;
+      const rows = await response.json();
+      if (rows[0]?.data) Object.assign(company, rows[0].data);
+    } catch (error) {
+      console.warn("Podaci firme koriste lokalni fallback.", error);
+    }
+  }
+
   function hydrateCompanyData() {
+    if (page === "home" && company.seo) {
+      document.title = company.seo.title || document.title;
+      document.querySelector('meta[name="description"]')?.setAttribute("content", company.seo.description || "");
+    }
     document.querySelectorAll("[data-company]").forEach((element) => {
       const key = element.dataset.company;
       if (company[key] !== undefined) element.textContent = company[key];
@@ -379,7 +400,7 @@
   }
 
   async function initialize() {
-    await loadWebsiteProjects();
+    await Promise.all([loadWebsiteProjects(), loadCompanySettings()]);
     renderSharedLayout();
     hydrateCompanyData();
 

@@ -20,6 +20,7 @@
   let calendarCursor = new Date();
   let calendarView = "month";
   const state = {
+    websiteSettings: {},
     websiteProjects: [],
     employees: [],
     projects: [],
@@ -105,6 +106,11 @@
     return state.projects.find((item) => item.id === id);
   }
 
+  function mediaUrl(value) {
+    if (!value) return "/images/hero.jpeg";
+    return /^https?:\/\//i.test(value) ? value : `/${String(value).replace(/^\/+/, "")}`;
+  }
+
   function monthBounds(date) {
     const start = new Date(date.getFullYear(), date.getMonth(), 1);
     const end = new Date(date.getFullYear(), date.getMonth() + 1, 1);
@@ -138,6 +144,7 @@
 
   async function loadAll() {
     const queries = [
+      ["websiteSettings", client.from("website_settings").select("data").eq("id", "company").single()],
       ["websiteProjects", client.from("website_projects").select("*").order("sort_order").order("created_at")],
       ["employees", client.from("employees").select("*").order("active", { ascending: false }).order("name")],
       ["projects", client.from("internal_projects").select("*").order("created_at", { ascending: false })],
@@ -151,7 +158,8 @@
     const results = await Promise.all(queries.map(([, query]) => query));
     results.forEach((result, index) => {
       if (result.error) throw result.error;
-      state[queries[index][0]] = result.data || [];
+      const key = queries[index][0];
+      state[key] = key === "websiteSettings" ? (result.data?.data || {}) : (result.data || []);
     });
   }
 
@@ -332,7 +340,7 @@
       (!category || project.category === category)
     );
     target.innerHTML = rows.length ? rows.map((project) => `<tr>
-      <td><div class="table-project"><img src="/${esc(project.image)}" alt=""><strong>${esc(project.title)}</strong></div></td>
+      <td><div class="table-project"><img src="${esc(mediaUrl(project.image))}" alt=""><strong>${esc(project.title)}</strong></div></td>
       <td>${esc(project.category)}</td><td>${esc(project.location || "—")}</td><td><span class="status-badge status-active">${esc(project.status)}</span></td>
       <td>${project.featured ? "Da" : "Ne"}</td><td>${project.sort_order}</td>
       <td><div class="org-table-actions"><a class="org-icon-button" href="/project-detail.html?project=${encodeURIComponent(project.slug)}" target="_blank" rel="noopener">Pregled</a><button class="org-icon-button" data-edit-website-project="${project.id}">Uredi</button><button class="org-icon-button danger" data-delete-website-project="${project.id}">Briši</button></div></td>
@@ -340,10 +348,24 @@
   }
 
   function websiteProjectModal(project) {
+    const existingImages = [...new Set([project?.image, ...(project?.gallery || [])].filter(Boolean))];
+    const existingMedia = existingImages.length
+      ? `<div class="website-media-existing full">
+          <span class="website-field-label">Postojeće fotografije</span>
+          <p>Označi koja treba biti naslovna. Fotografije označene za uklanjanje nestat će iz projekta nakon spremanja.</p>
+          <div class="website-media-grid">${existingImages.map((url, index) => `
+            <article class="website-media-item">
+              <img src="${esc(mediaUrl(url))}" alt="Fotografija projekta ${index + 1}">
+              <label class="media-choice"><input type="radio" name="existing_cover_choice" value="${esc(url)}" ${url === project?.image ? "checked" : ""}> Naslovna</label>
+              <label class="media-remove"><input type="checkbox" name="remove_media" value="${esc(url)}"> Ukloni</label>
+            </article>`).join("")}</div>
+        </div>`
+      : "";
     openModal({
       title: project ? "Uredi web projekt" : "Novi web projekt",
       eyebrow: "JAVNA WEB STRANICA",
       fields:
+        '<h3 class="form-section-title">Osnovni podaci</h3>' +
         field("Naslov", "title", project?.title, { required: true, full: true }) +
         field("Slug / URL", "slug", project?.slug, { full: true }) +
         field("Kategorija", "category", project?.category || "Iskopi", { type: "select", choices: ["Iskopi", "Rušenja", "Uređenje terena", "Odvoz"].map((value) => [value, value]) }) +
@@ -352,31 +374,59 @@
         field("Godina / datum", "project_date", project?.project_date || String(new Date().getFullYear()) + ".") +
         field("Istaknuti projekt", "featured", String(project?.featured ?? false), { type: "select", choices: [["false", "Ne"], ["true", "Da"]] }) +
         field("Redoslijed", "sort_order", project?.sort_order ?? state.websiteProjects.length + 1, { type: "number", min: 0, step: "1" }) +
-        field("Naslovna slika", "image", project?.image || "images/hero.jpeg", { required: true, full: true }) +
+        '<h3 class="form-section-title">Tekst projekta</h3>' +
         field("Kratki opis", "excerpt", project?.excerpt, { type: "textarea", required: true, full: true }) +
         field("Puni opis", "description", project?.description, { type: "textarea", required: true, full: true, rows: 5 }) +
-        field("Galerija (putanje odvojene zarezom)", "gallery", (project?.gallery || []).join(", "), { type: "textarea", full: true }) +
         field("Mehanizacija (odvojeno zarezom)", "equipment", (project?.equipment || []).join(", "), { full: true }) +
-        field("Tehničke stavke (odvojeno zarezom)", "specs", (project?.specs || []).join(", "), { full: true }),
+        field("Tehničke stavke (odvojeno zarezom)", "specs", (project?.specs || []).join(", "), { full: true }) +
+        '<h3 class="form-section-title">Fotografije projekta</h3>' +
+        existingMedia +
+        `<label class="website-upload-field full"><span>Nova naslovna fotografija</span><input name="cover_image" type="file" accept="image/jpeg,image/png,image/webp" ${project ? "" : "required"}><small>Odaberi jednu glavnu fotografiju. Automatski se smanjuje i sprema kao WebP.</small></label>
+         <label class="website-upload-field full"><span>Dodatne fotografije za galeriju</span><input name="gallery_images" type="file" accept="image/jpeg,image/png,image/webp" multiple><small>Možeš odabrati više fotografija odjednom. Prikazat će se unutar detalja projekta.</small></label>
+         <div class="website-upload-note full"><strong>Kako radi?</strong><span>Naslovna fotografija prikazuje se na kartici projekta i velika je na vrhu detalja. Galerijske fotografije prikazuju se niže unutar projekta.</span></div>`,
       submit: async (data) => {
         const splitList = (name) => String(data.get(name) || "").split(",").map((item) => item.trim()).filter(Boolean);
         const title = formValue(data, "title");
         const generatedSlug = title.toLowerCase()
           .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
           .replace(/đ/g, "d").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+        const slug = formValue(data, "slug") || generatedSlug;
+        const removedMedia = data.getAll("remove_media").map(String);
+        const retainedImages = existingImages.filter((url) => !removedMedia.includes(url));
+        const chosenExistingCover = String(data.get("existing_cover_choice") || "");
+        const previousCover = project?.image && retainedImages.includes(project.image) ? project.image : "";
+        const coverFile = data.get("cover_image");
+        const galleryFiles = data.getAll("gallery_images").filter((file) => file instanceof File && file.size > 0);
+        let coverImage = chosenExistingCover && retainedImages.includes(chosenExistingCover)
+          ? chosenExistingCover
+          : retainedImages[0] || "";
+        let gallery = retainedImages.filter((url) => url !== coverImage);
+
+        if (coverFile instanceof File && coverFile.size > 0) {
+          coverImage = await uploadWebsiteImage(coverFile, slug, "cover");
+          if (previousCover && !gallery.includes(previousCover)) gallery.unshift(previousCover);
+        }
+        if (galleryFiles.length) {
+          const uploadedGallery = [];
+          for (const file of galleryFiles) uploadedGallery.push(await uploadWebsiteImage(file, slug, "gallery"));
+          if (!coverImage && uploadedGallery.length) coverImage = uploadedGallery.shift();
+          gallery.push(...uploadedGallery);
+        }
+        if (!coverImage) throw new Error("Odaberi naslovnu fotografiju projekta.");
+
         const payload = {
           title,
-          slug: formValue(data, "slug") || generatedSlug,
+          slug,
           category: data.get("category"),
           location: formValue(data, "location") || null,
           status: formValue(data, "status") || "Dovršeno",
           project_date: formValue(data, "project_date") || null,
           featured: data.get("featured") === "true",
           sort_order: Number(data.get("sort_order") || 0),
-          image: formValue(data, "image"),
+          image: coverImage,
           excerpt: formValue(data, "excerpt") || null,
           description: formValue(data, "description") || null,
-          gallery: splitList("gallery"),
+          gallery: [...new Set(gallery.filter((url) => url !== coverImage))],
           equipment: splitList("equipment"),
           specs: splitList("specs")
         };
@@ -385,6 +435,7 @@
           : client.from("website_projects").insert(payload);
         const { error } = await query;
         if (error) throw error;
+        await removeWebsiteStorageFiles(removedMedia);
       }
     });
   }
@@ -404,31 +455,168 @@
   }
 
   function renderWebsiteContent() {
-    const company = window.COMPANY_DATA || {};
-    const rows = [
-      ["Naziv", company.name],
-      ["Pravni naziv", company.legalName],
-      ["Telefon", company.phone],
-      ["E-mail", company.email],
-      ["Adresa", company.address],
-      ["Područje rada", company.serviceArea],
-      ["Radno vrijeme", company.workingHours],
-      ["OIB", company.oib]
-    ];
+    const company = { ...(window.COMPANY_DATA || {}), ...state.websiteSettings };
+    const services = company.services || [];
+    const advantages = company.advantages || [];
+    const stats = company.stats || [];
+    const equipment = company.equipment || [];
+    const process = company.process || [];
     app.innerHTML = pageHead(
       "CENTRALNI PODACI",
       "Podaci firme",
-      "Pregled podataka koji se koriste na javnoj stranici."
+      "Sve izmjene spremaju se u Supabase i automatski se koriste na javnoj web stranici.",
+      '<a class="button button-ghost" href="/" target="_blank" rel="noopener">Pregledaj stranicu ↗</a>'
     ) +
-      `<section class="org-card">
-        <div class="org-card-head"><h2>Kontakt i pravni podaci</h2></div>
-        ${rows.map(([label, value]) => `<div class="org-list-item"><span>${esc(label)}</span><strong>${esc(value || "Nije uneseno")}</strong></div>`).join("")}
-      </section>
-      <div class="org-panels">
-        ${listPanel("Usluge", (company.services || []).map((item) => [item.title, item.text, item.number]), "Nema usluga.")}
-        ${listPanel("Mehanizacija", (company.equipment || []).map((item) => [item.title, item.text, item.tag]), "Nema mehanizacije.")}
-      </div>
-      <section class="org-card" style="margin-top:1.25rem"><p><strong>Gdje ih mijenjaš:</strong> <code>data/company-data.js</code>. Vrijednosti <code>DODATI_STVARNU_ADRESU</code> i <code>DODATI_STVARNI_OIB</code> još treba zamijeniti stvarnim podacima.</p></section>`;
+      `<form class="website-content-form" id="website-content-form">
+        ${contentSection("Osnovni podaci", "Naziv i osnovni identitet firme",
+          field("Naziv firme", "name", company.name, { required: true }) +
+          field("Kratki naziv / inicijali", "shortName", company.shortName, { required: true }) +
+          field("Pravni naziv", "legalName", company.legalName, { required: true }) +
+          field("Slogan", "slogan", company.slogan, { required: true, full: true })
+        )}
+        ${contentSection("Početna stranica", "Glavni naslov i uvodni tekst",
+          field("Mali naslov iznad hero naslova", "eyebrow", company.eyebrow, { full: true }) +
+          field("Glavni hero naslov", "heroTitle", company.heroTitle, { type: "textarea", required: true, full: true, rows: 3 }) +
+          field("Hero opis", "heroText", company.heroText, { type: "textarea", required: true, full: true, rows: 4 })
+        )}
+        ${contentSection("O nama", "Tekstovi na početnoj i O nama stranici",
+          field("Kratki opis firme", "about", company.about, { type: "textarea", required: true, full: true, rows: 5 }) +
+          field("Prošireni opis firme", "aboutExtended", company.aboutExtended, { type: "textarea", required: true, full: true, rows: 6 })
+        )}
+        ${contentSection("Kontakt i pravni podaci", "Podaci prikazani na kontakt stranici i footeru",
+          field("Telefon za prikaz", "phone", company.phone, { required: true }) +
+          field("Telefon za tel: link", "phoneHref", company.phoneHref, { required: true }) +
+          field("E-mail", "email", company.email, { type: "email", required: true }) +
+          field("Adresa", "address", company.address, { required: true }) +
+          field("Područje rada", "serviceArea", company.serviceArea, { required: true }) +
+          field("Radno vrijeme", "workingHours", company.workingHours, { required: true }) +
+          field("OIB", "oib", company.oib, { full: true })
+        )}
+        ${contentSection("SEO", "Naslov i opis koji koriste tražilice",
+          field("SEO naslov", "seo_title", company.seo?.title, { required: true, full: true }) +
+          field("SEO opis", "seo_description", company.seo?.description, { type: "textarea", required: true, full: true, rows: 3 })
+        )}
+        ${contentCollection("Usluge", "Četiri glavne usluge na početnoj stranici", services, (item, index) =>
+          `<div class="content-repeat-card"><span class="content-repeat-number">${String(index + 1).padStart(2, "0")}</span>
+            ${field("Naziv usluge", `service_${index}_title`, item.title, { required: true, full: true })}
+            ${field("Opis usluge", `service_${index}_text`, item.text, { type: "textarea", required: true, full: true, rows: 3 })}
+          </div>`
+        )}
+        ${contentCollection("Zašto odabrati GLAVAŠ KOP", "Kratke prednosti prikazane kao numerirane stavke", advantages, (item, index) =>
+          `<div class="content-repeat-card"><span class="content-repeat-number">${String(index + 1).padStart(2, "0")}</span>
+            ${field("Tekst prednosti", `advantage_${index}_label`, item.label, { required: true, full: true })}
+          </div>`
+        )}
+        ${contentCollection("Statistike", "Broj i opis svake statistike", stats, (item, index) =>
+          `<div class="content-repeat-card compact-repeat">
+            ${field("Vrijednost", `stat_${index}_value`, item.value, { required: true })}
+            ${field("Opis", `stat_${index}_label`, item.label, { required: true })}
+          </div>`
+        )}
+        ${contentCollection("Mehanizacija", "Naziv, oznaka, opis i fotografija opreme", equipment, (item, index) =>
+          `<div class="content-repeat-card equipment-repeat">
+            <img class="content-image-preview" src="${esc(mediaUrl(item.image))}" alt="${esc(item.title || "Mehanizacija")}">
+            ${field("Naziv", `equipment_${index}_title`, item.title, { required: true })}
+            ${field("Oznaka", `equipment_${index}_tag`, item.tag, { required: true })}
+            ${field("Opis", `equipment_${index}_text`, item.text, { type: "textarea", required: true, full: true, rows: 3 })}
+            <label class="website-upload-field full"><span>Nova fotografija (opcionalno)</span><input name="equipment_${index}_image_file" type="file" accept="image/jpeg,image/png,image/webp"><small>Postojeća fotografija ostaje ako ne odabereš novu.</small></label>
+            <input type="hidden" name="equipment_${index}_image" value="${esc(item.image || "")}">
+          </div>`
+        )}
+        ${contentCollection("Proces rada", "Koraci od prvog upita do završetka", process, (item, index) =>
+          `<div class="content-repeat-card"><span class="content-repeat-number">${String(index + 1).padStart(2, "0")}</span>
+            ${field("Naslov koraka", `process_${index}_title`, item.title, { required: true, full: true })}
+            ${field("Opis koraka", `process_${index}_text`, item.text, { type: "textarea", required: true, full: true, rows: 3 })}
+          </div>`
+        )}
+        <div class="website-content-save"><p>Promjene postaju vidljive na javnoj stranici nakon spremanja i osvježavanja.</p><button class="button button-dark" type="submit">Spremi sve podatke firme</button></div>
+      </form>`;
+  }
+
+  function contentSection(title, description, fields) {
+    return `<section class="org-card website-content-section">
+      <div class="org-card-head"><div><h2>${esc(title)}</h2><p>${esc(description)}</p></div></div>
+      <div class="form-grid">${fields}</div>
+    </section>`;
+  }
+
+  function contentCollection(title, description, items, renderItem) {
+    return `<section class="org-card website-content-section">
+      <div class="org-card-head"><div><h2>${esc(title)}</h2><p>${esc(description)}</p></div></div>
+      <div class="content-repeat-grid">${items.map(renderItem).join("")}</div>
+    </section>`;
+  }
+
+  async function saveWebsiteContent(form) {
+    const data = new FormData(form);
+    const current = { ...(window.COMPANY_DATA || {}), ...state.websiteSettings };
+    const read = (name) => String(data.get(name) || "").trim();
+    const services = (current.services || []).map((item, index) => ({
+      ...item,
+      number: String(index + 1).padStart(2, "0"),
+      title: read(`service_${index}_title`),
+      text: read(`service_${index}_text`)
+    }));
+    const advantages = (current.advantages || []).map((item, index) => ({
+      ...item,
+      value: String(index + 1).padStart(2, "0"),
+      label: read(`advantage_${index}_label`)
+    }));
+    const stats = (current.stats || []).map((item, index) => ({
+      ...item,
+      value: read(`stat_${index}_value`),
+      label: read(`stat_${index}_label`)
+    }));
+    const equipment = [];
+    for (let index = 0; index < (current.equipment || []).length; index += 1) {
+      const imageFile = data.get(`equipment_${index}_image_file`);
+      let image = read(`equipment_${index}_image`);
+      if (imageFile instanceof File && imageFile.size > 0) {
+        image = await uploadWebsiteImage(imageFile, "company", `equipment-${index + 1}`);
+      }
+      equipment.push({
+        ...current.equipment[index],
+        title: read(`equipment_${index}_title`),
+        tag: read(`equipment_${index}_tag`),
+        text: read(`equipment_${index}_text`),
+        image
+      });
+    }
+    const process = (current.process || []).map((item, index) => ({
+      ...item,
+      step: String(index + 1).padStart(2, "0"),
+      title: read(`process_${index}_title`),
+      text: read(`process_${index}_text`)
+    }));
+    const payload = {
+      ...current,
+      name: read("name"),
+      shortName: read("shortName"),
+      legalName: read("legalName"),
+      slogan: read("slogan"),
+      eyebrow: read("eyebrow"),
+      heroTitle: read("heroTitle"),
+      heroText: read("heroText"),
+      about: read("about"),
+      aboutExtended: read("aboutExtended"),
+      phone: read("phone"),
+      phoneHref: read("phoneHref"),
+      email: read("email"),
+      address: read("address"),
+      serviceArea: read("serviceArea"),
+      workingHours: read("workingHours"),
+      oib: read("oib"),
+      seo: { title: read("seo_title"), description: read("seo_description") },
+      services,
+      advantages,
+      stats,
+      equipment,
+      process
+    };
+    const { error } = await client.from("website_settings").upsert({ id: "company", data: payload });
+    if (error) throw error;
+    state.websiteSettings = payload;
+    Object.assign(window.COMPANY_DATA, payload);
   }
 
   function stat(value, label, highlight = false) {
@@ -1040,6 +1228,33 @@
     return { file: new File([blob], `${baseName}.${extension}`, { type }), originalSize: file.size, compressedSize: blob.size };
   }
 
+  async function uploadWebsiteImage(file, slug, folder) {
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      throw new Error(`${file.name}: dopuštene su JPG, PNG i WebP fotografije.`);
+    }
+    const compressed = await compressImage(file, { maxWidth: 2000, quality: 0.78 });
+    const safeSlug = slug.replace(/[^a-z0-9-]/g, "-");
+    const safeName = compressed.file.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9._-]/g, "-");
+    const path = `projects/${safeSlug}/${folder}/${Date.now()}-${safeName}`;
+    const { error } = await client.storage
+      .from("public-website-images")
+      .upload(path, compressed.file, { contentType: compressed.file.type, upsert: false });
+    if (error) throw error;
+    const { data } = client.storage.from("public-website-images").getPublicUrl(path);
+    toast(`${file.name}: spremljeno ${formatBytes(file.size)} → ${formatBytes(compressed.compressedSize)}`);
+    return data.publicUrl;
+  }
+
+  async function removeWebsiteStorageFiles(urls) {
+    const marker = "/storage/v1/object/public/public-website-images/";
+    const paths = urls
+      .filter((url) => url.includes(marker))
+      .map((url) => decodeURIComponent(url.split(marker)[1]));
+    if (!paths.length) return;
+    const { error } = await client.storage.from("public-website-images").remove(paths);
+    if (error) console.warn("Neke uklonjene slike nisu obrisane iz Storagea.", error);
+  }
+
   async function openPrivateFile(id) {
     const item = state.files.find((file) => file.id === id);
     if (!item) return;
@@ -1278,6 +1493,25 @@
     if (event.target.id === "website-project-category") drawWebsiteProjectRows();
     if (event.target.id === "employee-status") drawEmployeeRows();
     if (event.target.id === "project-status") drawProjectRows();
+  });
+
+  document.addEventListener("submit", async (event) => {
+    if (event.target.id !== "website-content-form") return;
+    event.preventDefault();
+    const button = event.target.querySelector('button[type="submit"]');
+    const originalLabel = button.textContent;
+    button.disabled = true;
+    button.textContent = "Spremanje…";
+    try {
+      await saveWebsiteContent(event.target);
+      toast("Podaci firme su spremljeni i dostupni javnoj stranici.");
+      renderWebsiteContent();
+    } catch (error) {
+      fail(error, "Podatke firme nije moguće spremiti.");
+    } finally {
+      button.disabled = false;
+      button.textContent = originalLabel;
+    }
   });
 
   modalForm.addEventListener("submit", async (event) => {
