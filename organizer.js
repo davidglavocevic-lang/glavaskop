@@ -598,7 +598,13 @@
     const projectExpenses = state.expenses.filter((item) => item.project_id === project.id);
     const files = state.files.filter((item) => item.project_id === project.id);
     const events = state.events.filter((item) => item.project_id === project.id);
-    const fileCards = await Promise.all(files.map(fileCard));
+    const images = files.filter((item) => item.is_image);
+    const documents = files.filter((item) => !item.is_image);
+    const coverImage = images.find((item) => item.is_cover) || images[0] || null;
+    const galleryImages = images.filter((item) => item.id !== coverImage?.id);
+    const coverUrl = coverImage ? await signedFileUrl(coverImage) : "";
+    const imageCards = await Promise.all(galleryImages.map(fileCard));
+    const documentCards = await Promise.all(documents.map(fileCard));
 
     app.innerHTML = pageHead("DETALJI PROJEKTA", project.title, project.location || "Lokacija nije unesena",
       `<button class="button button-ghost" data-action="back-projects">← Projekti</button><button class="button button-dark" data-edit-project="${project.id}">Uredi projekt</button>`) +
@@ -614,15 +620,45 @@
             </div>
             <p>${esc(project.description || "Opis nije unesen.")}</p>
           </section>
-          <section class="org-card" style="margin-top:1.2rem">
-            <div class="org-card-head"><h2>Slike i nacrti</h2></div>
+          <section class="org-card project-files-card" style="margin-top:1.2rem">
+            <div class="org-card-head project-files-heading">
+              <div><h2>Slike i nacrti</h2><p>Privatna galerija projekta i dokumentacija dostupna samo prijavljenom vlasniku.</p></div>
+              <span class="file-count">${fileCountLabel(images.length, "slika", "slike", "slika")} · ${fileCountLabel(documents.length, "dokument", "dokumenta", "dokumenata")}</span>
+            </div>
             <label class="upload-zone" id="upload-zone">
               <input type="file" id="project-files-input" accept="image/jpeg,image/png,image/webp,application/pdf" multiple hidden>
-              <strong>Odaberite ili dovucite slike i PDF dokumente</strong><br>
-              <small>Slike se automatski smanjuju na najviše 2000 px i komprimiraju prije spremanja.</small>
+              <span class="upload-zone-icon" aria-hidden="true">+</span>
+              <span class="upload-zone-copy">
+                <strong>Dodaj slike ili PDF nacrte</strong>
+                <small>Klikni ovdje ili dovuci datoteke. Slike se automatski smanjuju i komprimiraju.</small>
+                <em>JPG, PNG, WebP ili PDF do 20 MB</em>
+              </span>
+              <span class="upload-zone-button">Odaberi datoteke</span>
             </label>
             <div class="upload-progress" hidden id="upload-progress"><span></span></div>
-            <div class="file-grid">${fileCards.join("") || empty("Projekt još nema slika ni dokumenata.")}</div>
+            ${files.length ? `
+              <div class="project-media-sections">
+                <section class="cover-section">
+                  <div class="file-section-heading">
+                    <div><span class="file-section-kicker">GLAVNA FOTOGRAFIJA</span><h3>Vizualni pregled projekta</h3></div>
+                    <p>Prikazuje se prva u ovom internom projektu. Ne objavljuje se automatski na javnoj web stranici.</p>
+                  </div>
+                  ${coverImage ? `
+                    <article class="cover-preview">
+                      <img src="${esc(coverUrl)}" alt="${esc(coverImage.original_file_name || "Glavna fotografija projekta")}">
+                      <div class="cover-preview-overlay"><span>Glavna fotografija</span><strong>${esc(coverImage.original_file_name || coverImage.file_name)}</strong></div>
+                      <div class="cover-preview-actions"><button class="org-icon-button" data-open-file="${coverImage.id}">Otvori</button><button class="org-icon-button danger" data-delete-file="${coverImage.id}">Obriši</button></div>
+                    </article>` : empty("Dodaj sliku kako bi projekt dobio glavnu fotografiju.")}
+                </section>
+                <section class="file-section">
+                  <div class="file-section-heading"><div><span class="file-section-kicker">GALERIJA</span><h3>Ostale fotografije</h3></div><p>Klikni “Postavi kao glavnu” ako želiš zamijeniti veliku fotografiju iznad.</p></div>
+                  <div class="file-grid image-grid">${imageCards.join("") || empty("Nema dodatnih fotografija.")}</div>
+                </section>
+                <section class="file-section">
+                  <div class="file-section-heading"><div><span class="file-section-kicker">DOKUMENTACIJA</span><h3>Nacrti i PDF dokumenti</h3></div></div>
+                  <div class="document-list">${documentCards.join("") || empty("Nema dodanih nacrta ni dokumenata.")}</div>
+                </section>
+              </div>` : `<div class="files-empty-state"><span>SLIKE / PDF</span><h3>Projekt još nema datoteka</h3><p>Dodaj fotografije radova, nacrte ili drugu projektnu dokumentaciju pomoću polja iznad.</p></div>`}
           </section>
         </div>
         <div>
@@ -742,21 +778,22 @@
       `<div class="file-grid">${cards.join("") || empty("Nema uploadanih datoteka. Dodajte ih unutar detalja internog projekta.")}</div>`;
   }
 
+  async function signedFileUrl(item) {
+    const { data } = await client.storage.from(item.storage_bucket).createSignedUrl(item.storage_path, 300);
+    return data?.signedUrl || "";
+  }
+
   async function fileCard(item) {
-    let url = "";
-    if (item.is_image) {
-      const { data } = await client.storage.from(item.storage_bucket).createSignedUrl(item.storage_path, 300);
-      url = data?.signedUrl || "";
-    }
+    const url = item.is_image ? await signedFileUrl(item) : "";
     const original = Number(item.original_size_bytes || item.file_size_bytes || 0);
     const compressed = Number(item.compressed_size_bytes || item.file_size_bytes || 0);
     const saving = original > compressed ? Math.round((1 - compressed / original) * 100) : 0;
-    return `<article class="file-card">
-      ${item.is_image ? `<img src="${esc(url)}" alt="${esc(item.original_file_name || "Projektna slika")}" loading="lazy">` : '<div class="empty-state"><strong>PDF</strong></div>'}
+    return `<article class="file-card ${item.is_image ? "image-file-card" : "document-file-card"}">
+      ${item.is_image ? `<div class="file-card-image"><img src="${esc(url)}" alt="${esc(item.original_file_name || "Projektna slika")}" loading="lazy">${item.is_cover ? '<span class="cover-badge">Glavna</span>' : ""}</div>` : '<div class="document-icon" aria-hidden="true"><strong>PDF</strong><span>Dokument</span></div>'}
       <div class="file-card-body">
         <strong>${esc(item.original_file_name || item.file_name)}</strong>
         <small>${esc(getProject(item.project_id)?.title || "Projekt")} · ${formatBytes(compressed)}${saving ? ` · ${saving}% manje` : ""}</small>
-        <div class="file-actions"><button class="org-icon-button" data-open-file="${item.id}">Otvori</button>${item.is_image ? `<button class="org-icon-button" data-cover-file="${item.id}">${item.is_cover ? "Naslovna ✓" : "Postavi naslovnu"}</button>` : ""}<button class="org-icon-button danger" data-delete-file="${item.id}">Briši</button></div>
+        <div class="file-actions"><button class="org-icon-button" data-open-file="${item.id}">Otvori</button>${item.is_image && !item.is_cover ? `<button class="org-icon-button cover-action" data-cover-file="${item.id}">Postavi kao glavnu</button>` : ""}<button class="org-icon-button danger" data-delete-file="${item.id}">Obriši</button></div>
       </div>
     </article>`;
   }
@@ -767,6 +804,15 @@
     const units = ["B", "KB", "MB", "GB"];
     const index = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
     return `${(bytes / 1024 ** index).toFixed(index ? 1 : 0)} ${units[index]}`;
+  }
+
+  function fileCountLabel(count, singular, paucal, plural) {
+    const lastTwo = count % 100;
+    const last = count % 10;
+    if (lastTwo >= 11 && lastTwo <= 14) return `${count} ${plural}`;
+    if (last === 1) return `${count} ${singular}`;
+    if (last >= 2 && last <= 4) return `${count} ${paucal}`;
+    return `${count} ${plural}`;
   }
 
   function renderCalendar() {
@@ -1026,7 +1072,7 @@
       const { error } = await client.from("project_files").update({ is_cover: true }).eq("id", id);
       if (error) throw error;
       await loadAll();
-      toast("Naslovna slika je postavljena.");
+      toast("Glavna fotografija projekta je promijenjena. Ona ostaje privatna i ne objavljuje se automatski na web stranici.");
       renderRoute();
     } catch (error) {
       fail(error);
