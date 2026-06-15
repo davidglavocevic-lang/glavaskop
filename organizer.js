@@ -19,6 +19,11 @@
   let modalDelete = null;
   let calendarCursor = new Date();
   let calendarView = "month";
+  const workHoursHistoryFilters = {
+    period: "36",
+    employeeId: "",
+    projectId: ""
+  };
   const state = {
     websiteSettings: {},
     websiteProjects: [],
@@ -186,6 +191,22 @@
     return fixedAgreement ? 0 : Number(item.hours) * Number(item.hourly_rate);
   }
 
+  async function loadAllWorkHours() {
+    const pageSize = 1000;
+    const rows = [];
+    for (let from = 0; ; from += pageSize) {
+      const { data, error } = await client
+        .from("employee_work_hours")
+        .select("*")
+        .order("work_date", { ascending: false })
+        .order("created_at", { ascending: false })
+        .range(from, from + pageSize - 1);
+      if (error) return { data: null, error };
+      rows.push(...data);
+      if (data.length < pageSize) return { data: rows, error: null };
+    }
+  }
+
   async function loadAll() {
     const queries = [
       ["websiteSettings", client.from("website_settings").select("data").eq("id", "company").single()],
@@ -193,7 +214,7 @@
       ["employees", client.from("employees").select("*").order("active", { ascending: false }).order("name")],
       ["projects", client.from("internal_projects").select("*").order("created_at", { ascending: false })],
       ["workers", client.from("project_workers").select("*").order("created_at", { ascending: false })],
-      ["workHours", client.from("employee_work_hours").select("*").order("work_date", { ascending: false }).order("created_at", { ascending: false })],
+      ["workHours", loadAllWorkHours()],
       ["payments", client.from("employee_payments").select("*").order("paid_at", { ascending: false })],
       ["expenses", client.from("expenses").select("*").order("expense_date", { ascending: false })],
       ["files", client.from("project_files").select("*").order("created_at", { ascending: false })],
@@ -734,7 +755,7 @@
     });
   }
 
-  function renderWorkHours(selectedDate = isoDate(new Date()), selectedProjectId = "") {
+  function renderWorkHours(selectedDate = isoDate(new Date()), selectedProjectId = "", editEmployeeId = "") {
     const availableProjects = state.projects.filter((item) => item.status !== "cancelled");
     const projectId = selectedProjectId || availableProjects.find((item) => item.status === "active")?.id || availableProjects[0]?.id || "";
     const existing = state.workHours.filter((item) => item.work_date === selectedDate && item.project_id === projectId);
@@ -769,7 +790,7 @@
               const record = existing.find((item) => item.employee_id === employee.id);
               const rate = Number(record?.hourly_rate ?? employee.hourly_rate ?? 0);
               const fixedAgreement = state.workers.some((worker) => worker.employee_id === employee.id && worker.project_id === projectId && Number(worker.agreed_amount) > 0);
-              return `<div class="work-hours-row">
+              return `<div class="work-hours-row ${employee.id === editEmployeeId ? "editing" : ""}" data-work-hours-employee="${employee.id}">
                 <span><strong>${esc(employee.name)}</strong><small>${esc(employee.role || "Radnik")}</small></span>
                 <span>${currency.format(rate)}</span>
                 <label><span class="mobile-field-label">Sati</span><input type="number" name="hours_${employee.id}" value="${record ? Number(record.hours) : ""}" min="0" max="24" step="0.25" inputmode="decimal" placeholder="0"></label>
@@ -781,19 +802,59 @@
           <div class="work-hours-save"><p>Upiši 0 ili ostavi prazno za radnika koji taj dan nije radio na odabranom projektu.</p><button class="button button-dark" type="submit">Spremi sate za ovaj dan</button></div>`}
       </form>
       <section class="org-card work-hours-history">
-        <div class="org-card-head"><h2>Zadnji uneseni sati</h2></div>
-        <div class="org-table-wrap"><table class="org-table"><thead><tr><th>Datum</th><th>Radnik</th><th>Projekt</th><th>Sati</th><th>Satnica</th><th>Zarada</th><th>Napomena</th><th>Akcije</th></tr></thead><tbody>${
-          state.workHours.slice(0, 100).map((item) => `<tr>
-            <td>${dateFormatter.format(new Date(`${item.work_date}T12:00:00`))}</td>
-            <td><strong>${esc(getEmployee(item.employee_id)?.name || "Radnik")}</strong></td>
-            <td>${esc(getProject(item.project_id)?.title || "Projekt")}</td>
-            <td>${number.format(item.hours)} h</td><td>${currency.format(item.hourly_rate)}</td>
-            <td><strong>${workHourEarning(item) ? currency.format(workHourEarning(item)) : "Fiksni dogovor"}</strong></td>
-            <td>${esc(item.note || "—")}</td>
-            <td><div class="org-table-actions"><button class="org-icon-button" data-edit-work-hours="${item.id}">Uredi dan</button><button class="org-icon-button danger" data-delete-work-hours="${item.id}">Briši</button></div></td>
-          </tr>`).join("") || `<tr><td colspan="8">${empty("Još nema dnevno evidentiranih sati.")}</td></tr>`
-        }</tbody></table></div>
+        <div class="org-card-head"><div><h2>Povijest radnih sati</h2><p>Pregledaj tko je, kada, koliko i na kojem projektu radio.</p></div><strong id="work-hours-history-total"></strong></div>
+        <div class="work-hours-history-filters">
+          <label><span>Razdoblje</span><select id="work-hours-history-period">
+            <option value="12">Posljednjih 12 mjeseci</option>
+            <option value="24">Posljednje 2 godine</option>
+            <option value="36" selected>Posljednje 3 godine</option>
+            <option value="all">Svi zapisi</option>
+          </select></label>
+          <label><span>Radnik</span><select id="work-hours-history-employee"><option value="">Svi radnici</option>${state.employees.map((employee) => `<option value="${employee.id}">${esc(employee.name)}</option>`).join("")}</select></label>
+          <label><span>Projekt</span><select id="work-hours-history-project"><option value="">Svi projekti</option>${state.projects.map((project) => `<option value="${project.id}">${esc(project.title)}</option>`).join("")}</select></label>
+        </div>
+        <div class="org-table-wrap"><table class="org-table"><thead><tr><th>Datum</th><th>Radnik</th><th>Projekt</th><th>Sati</th><th>Satnica</th><th>Zarada</th><th>Napomena</th><th>Akcije</th></tr></thead><tbody id="work-hours-history-rows"></tbody></table></div>
       </section>`;
+    document.getElementById("work-hours-history-period").value = workHoursHistoryFilters.period;
+    document.getElementById("work-hours-history-employee").value = workHoursHistoryFilters.employeeId;
+    document.getElementById("work-hours-history-project").value = workHoursHistoryFilters.projectId;
+    drawWorkHoursHistory();
+    if (editEmployeeId) {
+      requestAnimationFrame(() => {
+        const row = document.querySelector(`[data-work-hours-employee="${editEmployeeId}"]`);
+        row?.scrollIntoView({ behavior: "smooth", block: "center" });
+        row?.querySelector(`[name="hours_${editEmployeeId}"]`)?.focus();
+      });
+    }
+  }
+
+  function drawWorkHoursHistory() {
+    const target = document.getElementById("work-hours-history-rows");
+    if (!target) return;
+    const cutoff = new Date();
+    if (workHoursHistoryFilters.period !== "all") {
+      cutoff.setMonth(cutoff.getMonth() - Number(workHoursHistoryFilters.period));
+      cutoff.setHours(0, 0, 0, 0);
+    }
+    const rows = state.workHours.filter((item) => {
+      const inPeriod = workHoursHistoryFilters.period === "all" || new Date(`${item.work_date}T12:00:00`) >= cutoff;
+      return inPeriod &&
+        (!workHoursHistoryFilters.employeeId || item.employee_id === workHoursHistoryFilters.employeeId) &&
+        (!workHoursHistoryFilters.projectId || item.project_id === workHoursHistoryFilters.projectId);
+    });
+    const totalHours = rows.reduce((sum, item) => sum + Number(item.hours), 0);
+    const totalEarnings = rows.reduce((sum, item) => sum + workHourEarning(item), 0);
+    document.getElementById("work-hours-history-total").textContent =
+      `${number.format(totalHours)} h · ${currency.format(totalEarnings)}`;
+    target.innerHTML = rows.length ? rows.map((item) => `<tr>
+      <td>${dateFormatter.format(new Date(`${item.work_date}T12:00:00`))}</td>
+      <td><strong>${esc(getEmployee(item.employee_id)?.name || "Radnik")}</strong></td>
+      <td>${esc(getProject(item.project_id)?.title || "Projekt")}</td>
+      <td>${number.format(item.hours)} h</td><td>${currency.format(item.hourly_rate)}</td>
+      <td><strong>${workHourEarning(item) ? currency.format(workHourEarning(item)) : "Fiksni dogovor"}</strong></td>
+      <td>${esc(item.note || "—")}</td>
+      <td><div class="org-table-actions"><button class="org-icon-button" data-edit-work-hours="${item.id}">Uredi dan</button><button class="org-icon-button danger" data-delete-work-hours="${item.id}">Briši</button></div></td>
+    </tr>`).join("") : `<tr><td colspan="8">${empty("Nema radnih sati za odabrane filtre.")}</td></tr>`;
   }
 
   async function saveWorkHours(form) {
@@ -1611,7 +1672,7 @@
     const editWorkHours = event.target.closest("[data-edit-work-hours]");
     if (editWorkHours) {
       const item = state.workHours.find((record) => record.id === editWorkHours.dataset.editWorkHours);
-      if (item) return renderWorkHours(item.work_date, item.project_id);
+      if (item) return renderWorkHours(item.work_date, item.project_id, item.employee_id);
     }
     const deleteWorkHours = event.target.closest("[data-delete-work-hours]");
     if (deleteWorkHours) return removeRecord("employee_work_hours", deleteWorkHours.dataset.deleteWorkHours, "evidenciju radnih sati");
@@ -1665,6 +1726,18 @@
     if (event.target.id === "website-project-category") drawWebsiteProjectRows();
     if (event.target.id === "employee-status") drawEmployeeRows();
     if (event.target.id === "project-status") drawProjectRows();
+    if (event.target.id === "work-hours-history-period") {
+      workHoursHistoryFilters.period = event.target.value;
+      drawWorkHoursHistory();
+    }
+    if (event.target.id === "work-hours-history-employee") {
+      workHoursHistoryFilters.employeeId = event.target.value;
+      drawWorkHoursHistory();
+    }
+    if (event.target.id === "work-hours-history-project") {
+      workHoursHistoryFilters.projectId = event.target.value;
+      drawWorkHoursHistory();
+    }
     if (event.target.form?.id === "work-hours-form" && ["work_date", "project_id"].includes(event.target.name)) {
       renderWorkHours(event.target.form.elements.work_date.value, event.target.form.elements.project_id.value);
     }

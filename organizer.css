@@ -126,11 +126,16 @@
 .work-hours-row > span strong, .work-hours-row > span small { display: block; }
 .work-hours-row > span small { margin-top: .18rem; color: var(--org-muted); }
 .work-hours-row input { width: 100%; min-height: 42px; padding: .6rem; border: 2px solid var(--org-ink); background: #fff; font: inherit; }
+.work-hours-row.editing { outline: 4px solid var(--org-yellow); outline-offset: -2px; background: #fff7d0; }
 .work-hours-heading { color: #fff; background: var(--org-ink); border-bottom: 0; font-size: .68rem; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
 .mobile-field-label { display: none; }
 .work-hours-save { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 1.25rem; border-top: 2px solid var(--org-ink); background: #fff7d0; }
 .work-hours-save p { margin: 0; color: #49473f; font-size: .76rem; }
 .work-hours-history { margin-top: 1.25rem; padding: 1.25rem; }
+.work-hours-history .org-card-head p { margin: .3rem 0 0; color: var(--org-muted); font-size: .76rem; }
+.work-hours-history-filters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; margin-bottom: 1rem; padding: 1rem; background: #efeee8; border: 1px solid var(--org-line); }
+.work-hours-history-filters label > span { display: block; margin-bottom: .35rem; font-size: .68rem; font-weight: 800; text-transform: uppercase; }
+.work-hours-history-filters select { width: 100%; min-height: 44px; padding: .65rem; border: 2px solid var(--org-ink); background: #fff; font: inherit; }
 .work-hours-history .org-table-wrap { box-shadow: none; }
 .admin-sidebar-footer .handbook-button { display: flex; align-items: center; gap: .55rem; margin-bottom: .35rem; color: #fff; font-weight: 700; }
 .handbook-button span { display: grid; place-items: center; width: 23px; height: 23px; color: var(--org-ink); background: var(--org-yellow); font-weight: 900; }
@@ -255,6 +260,7 @@
   .equipment-repeat .content-image-preview { grid-row: auto; }
   .website-upload-note, .website-content-save { align-items: flex-start; flex-direction: column; }
   .work-hours-controls { grid-template-columns: 1fr; }
+  .work-hours-history-filters { grid-template-columns: 1fr; }
   .work-hours-row { grid-template-columns: 1fr 1fr; align-items: end; padding: 1rem 0; }
   .work-hours-heading { display: none; }
   .work-hours-row > span:first-child, .work-hours-row > label:nth-child(4) { grid-column: 1 / -1; }
