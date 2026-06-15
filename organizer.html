@@ -17,19 +17,33 @@
     <aside class="admin-sidebar organizer-sidebar" id="organizer-sidebar">
       <a class="brand light-brand" href="/"><span class="brand-mark">GK</span><span><strong>GLAVAŠ</strong><small>KOP</small></span></a>
       <nav class="admin-nav" aria-label="Admin navigacija">
-        <p class="nav-group-label">WEB STRANICA</p>
-        <a class="admin-nav-item" data-route="/admin/web" href="/admin/web"><span>01</span>Pregled stranice</a>
-        <a class="admin-nav-item" data-route="/admin/web/projekti" href="/admin/web/projekti"><span>02</span>Projekti za web</a>
-        <a class="admin-nav-item" data-route="/admin/web/recenzije" href="/admin/web/recenzije"><span>03</span>Recenzije</a>
-        <a class="admin-nav-item" data-route="/admin/web/sadrzaj" href="/admin/web/sadrzaj"><span>04</span>Podaci firme</a>
-        <p class="nav-group-label">ORGANIZER</p>
-        <a class="admin-nav-item" data-route="/admin/organizer" href="/admin/organizer"><span>05</span>Pregled</a>
-        <a class="admin-nav-item" data-route="/admin/organizer/kalendar" href="/admin/organizer/kalendar"><span>06</span>Kalendar</a>
-        <a class="admin-nav-item" data-route="/admin/organizer/mitarbeiter" href="/admin/organizer/mitarbeiter"><span>07</span>Radnici</a>
-        <a class="admin-nav-item" data-route="/admin/organizer/projekte" href="/admin/organizer/projekte"><span>08</span>Interni projekti</a>
-        <a class="admin-nav-item" data-route="/admin/organizer/isplate" href="/admin/organizer/isplate"><span>09</span>Isplate</a>
-        <a class="admin-nav-item" data-route="/admin/organizer/nacrti" href="/admin/organizer/nacrti"><span>10</span>Nacrti / dokumenti</a>
-        <a class="admin-nav-item" data-route="/admin/organizer/troskovi" href="/admin/organizer/troskovi"><span>11</span>Troškovi</a>
+        <section class="nav-group nav-group-web" aria-labelledby="nav-web-title">
+          <div class="nav-group-heading">
+            <span class="nav-group-code">WEB</span>
+            <div><strong id="nav-web-title">Web stranica</strong><small>Javni sadržaj i portfolio</small></div>
+          </div>
+          <div class="nav-group-links">
+            <a class="admin-nav-item" data-route="/admin/web" href="/admin/web"><span>01</span>Pregled stranice</a>
+            <a class="admin-nav-item" data-route="/admin/web/projekti" href="/admin/web/projekti"><span>02</span>Projekti za web</a>
+            <a class="admin-nav-item" data-route="/admin/web/recenzije" href="/admin/web/recenzije"><span>03</span>Recenzije</a>
+            <a class="admin-nav-item" data-route="/admin/web/sadrzaj" href="/admin/web/sadrzaj"><span>04</span>Podaci firme</a>
+          </div>
+        </section>
+        <section class="nav-group nav-group-organizer" aria-labelledby="nav-organizer-title">
+          <div class="nav-group-heading">
+            <span class="nav-group-code">ORG</span>
+            <div><strong id="nav-organizer-title">Organizer</strong><small>Privatno poslovanje firme</small></div>
+          </div>
+          <div class="nav-group-links">
+            <a class="admin-nav-item" data-route="/admin/organizer" href="/admin/organizer"><span>05</span>Pregled</a>
+            <a class="admin-nav-item" data-route="/admin/organizer/kalendar" href="/admin/organizer/kalendar"><span>06</span>Kalendar</a>
+            <a class="admin-nav-item" data-route="/admin/organizer/mitarbeiter" href="/admin/organizer/mitarbeiter"><span>07</span>Radnici</a>
+            <a class="admin-nav-item" data-route="/admin/organizer/projekte" href="/admin/organizer/projekte"><span>08</span>Interni projekti</a>
+            <a class="admin-nav-item" data-route="/admin/organizer/isplate" href="/admin/organizer/isplate"><span>09</span>Isplate</a>
+            <a class="admin-nav-item" data-route="/admin/organizer/nacrti" href="/admin/organizer/nacrti"><span>10</span>Nacrti / dokumenti</a>
+            <a class="admin-nav-item" data-route="/admin/organizer/troskovi" href="/admin/organizer/troskovi"><span>11</span>Troškovi</a>
+          </div>
+        </section>
       </nav>
       <div class="admin-sidebar-footer">
         <button id="push-toggle">Uključi obavijesti</button>

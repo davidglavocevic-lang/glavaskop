@@ -10,9 +10,24 @@
 
 .organizer-body { background: var(--org-paper); }
 .organizer-sidebar { overflow-y: auto; }
-.organizer-sidebar .admin-nav { display: block; }
+.organizer-sidebar .admin-nav { display: grid; gap: 1rem; margin-top: 52px; }
 .organizer-sidebar .admin-nav-item { display: flex; text-decoration: none; width: 100%; }
-.nav-group-label { color: #7c7b72; font: 700 .68rem/1 Manrope, sans-serif; letter-spacing: .16em; margin: 1.7rem 1rem .55rem; }
+.nav-group { border: 1px solid #3b3a34; background: #1c1c18; }
+.nav-group-heading { display: grid; grid-template-columns: 44px 1fr; align-items: center; gap: .7rem; padding: .8rem; border-bottom: 1px solid #3b3a34; }
+.nav-group-heading strong, .nav-group-heading small { display: block; }
+.nav-group-heading strong { color: #fff; font: 800 1.05rem/1 "Barlow Condensed", sans-serif; letter-spacing: .05em; text-transform: uppercase; }
+.nav-group-heading small { margin-top: .22rem; color: #85837a; font-size: .58rem; }
+.nav-group-code { display: grid; place-items: center; width: 44px; height: 34px; border: 1px solid #5b5950; color: #aaa89f; font: 800 .66rem/1 Manrope, sans-serif; letter-spacing: .08em; }
+.nav-group-web .nav-group-heading { background: #2a281d; border-bottom-color: #66571f; }
+.nav-group-web .nav-group-code { color: var(--org-ink); background: var(--org-yellow); border-color: var(--org-yellow); }
+.nav-group-organizer { border-color: #4a4942; box-shadow: inset 3px 0 0 #77756c; }
+.nav-group-organizer .nav-group-heading { background: #24241f; }
+.nav-group-organizer .nav-group-code { color: #fff; background: #55544d; }
+.nav-group-links { padding: .35rem; }
+.organizer-sidebar .nav-group .admin-nav-item { margin: .16rem 0; padding: .72rem .65rem; font-size: .78rem; }
+.organizer-sidebar .nav-group .admin-nav-item span { flex: 0 0 28px; }
+.organizer-sidebar .nav-group-web .admin-nav-item.active { box-shadow: inset 4px 0 0 #fff; }
+.organizer-sidebar .nav-group-organizer .admin-nav-item.active { box-shadow: inset 4px 0 0 var(--org-yellow); }
 .admin-user { max-width: 36vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .78rem; }
 .organizer-content { min-height: calc(100vh - 76px); }
 .organizer-loading { display: grid; place-items: center; min-height: 55vh; color: var(--org-muted); }
