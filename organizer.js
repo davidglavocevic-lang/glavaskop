@@ -730,6 +730,24 @@
     });
   }
 
+  function passwordModal() {
+    openModal({
+      title: "Promijeni lozinku",
+      eyebrow: "SIGURNOST RAČUNA",
+      fields:
+        field("Nova lozinka", "password", "", { type: "password", required: true, full: true }) +
+        field("Ponovite novu lozinku", "password_confirmation", "", { type: "password", required: true, full: true }),
+      submit: async (data) => {
+        const password = String(data.get("password"));
+        const confirmation = String(data.get("password_confirmation"));
+        if (password.length < 10) throw new Error("Lozinka mora imati najmanje 10 znakova.");
+        if (password !== confirmation) throw new Error("Lozinke se ne podudaraju.");
+        const { error } = await client.auth.updateUser({ password });
+        if (error) throw error;
+      }
+    });
+  }
+
   function setupUpload(project) {
     const input = document.getElementById("project-files-input");
     const zone = document.getElementById("upload-zone");
@@ -1046,6 +1064,7 @@
   window.addEventListener("popstate", renderRoute);
   document.getElementById("admin-menu-toggle").addEventListener("click", () => document.getElementById("organizer-sidebar").classList.toggle("open"));
   document.getElementById("push-toggle").addEventListener("click", enablePush);
+  document.getElementById("change-password").addEventListener("click", passwordModal);
   document.getElementById("modal-delete").addEventListener("click", async () => {
     if (!modalDelete) return;
     try {
