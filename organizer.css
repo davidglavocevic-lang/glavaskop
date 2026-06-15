@@ -102,7 +102,7 @@
 .handbook-sections summary::after { content: "+"; margin-left: auto; font-size: 1.2rem; }
 .handbook-sections details[open] summary { color: #fff; background: var(--org-ink); }
 .handbook-sections details[open] summary::after { content: "−"; color: var(--org-yellow); }
-.handbook-sections summary span { color: #8a6c00; font-family: "Barlow Condensed", sans-serif; }
+.handbook-sections summary span { min-width: 24px; color: #8a6c00; font: 800 .75rem/1 Manrope, sans-serif; letter-spacing: .02em; font-variant-numeric: tabular-nums; }
 .handbook-sections details[open] summary span { color: var(--org-yellow); }
 .handbook-sections details > div { padding: .2rem 1rem 1rem; color: #3f3e39; font-size: .82rem; }
 .handbook-sections ul { margin: .65rem 0 0; padding-left: 1.2rem; }
