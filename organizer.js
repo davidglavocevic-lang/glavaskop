@@ -1043,9 +1043,22 @@
   async function openPrivateFile(id) {
     const item = state.files.find((file) => file.id === id);
     if (!item) return;
-    const { data, error } = await client.storage.from(item.storage_bucket).createSignedUrl(item.storage_path, 120, { download: false });
-    if (error) return fail(error);
-    window.open(data.signedUrl, "_blank", "noopener");
+    const previewTab = window.open("", "_blank");
+    if (!previewTab) {
+      toast("Safari je blokirao novi prozor. Dopusti pop-up prozore za ovu stranicu i pokušaj ponovno.", "error");
+      return;
+    }
+    previewTab.opener = null;
+    previewTab.document.title = "Učitavanje datoteke…";
+    previewTab.document.body.innerHTML = '<p style="font:16px system-ui;padding:32px">Učitavanje privatne datoteke…</p>';
+    try {
+      const { data, error } = await client.storage.from(item.storage_bucket).createSignedUrl(item.storage_path, 120, { download: false });
+      if (error) throw error;
+      previewTab.location.replace(data.signedUrl);
+    } catch (error) {
+      previewTab.close();
+      fail(error, "Datoteku nije moguće otvoriti.");
+    }
   }
 
   async function deleteFile(id) {
