@@ -92,7 +92,7 @@ Background push koristi:
 - `POST /api/push/test`
 - `GET /api/cron/send-reminders`
 
-Cron endpoint zahtijeva `Authorization: Bearer ${CRON_SECRET}`. `vercel.json` je postavljen na provjeru svakih pet minuta. Česti cron poslovi mogu zahtijevati Vercel Pro; na Hobby planu in-app podsjetnici i dalje rade dok je Organizer otvoren.
+Cron endpoint zahtijeva `Authorization: Bearer ${CRON_SECRET}`. Produkcijski `vercel.json` koristi dnevni poziv u `06:00 UTC` jer povezani Vercel Hobby plan ne dopušta češći raspored. Za stvarni background podsjetnik svakih pet minuta promijenite schedule u `*/5 * * * *` nakon prelaska na Vercel Pro ili pozivajte isti zaštićeni endpoint vanjskim schedulerom. In-app podsjetnici rade svake minute dok je Organizer otvoren.
 
 VAPID ključevi mogu se generirati naredbom:
 
