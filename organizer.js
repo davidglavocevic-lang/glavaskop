@@ -20,6 +20,7 @@
   let calendarCursor = new Date();
   let calendarView = "month";
   const state = {
+    websiteProjects: [],
     employees: [],
     projects: [],
     workers: [],
@@ -137,6 +138,7 @@
 
   async function loadAll() {
     const queries = [
+      ["websiteProjects", client.from("website_projects").select("*").order("sort_order").order("created_at")],
       ["employees", client.from("employees").select("*").order("active", { ascending: false }).order("name")],
       ["projects", client.from("internal_projects").select("*").order("created_at", { ascending: false })],
       ["workers", client.from("project_workers").select("*").order("created_at", { ascending: false })],
@@ -156,11 +158,15 @@
   function setActiveRoute() {
     document.querySelectorAll("[data-route]").forEach((link) => {
       const route = link.dataset.route;
-      const active = route === "/admin/organizer"
+      const active = ["/admin/web", "/admin/organizer"].includes(route)
         ? location.pathname === route
         : location.pathname.startsWith(route);
       link.classList.toggle("active", active);
     });
+  }
+
+  function setAdminSection(title) {
+    document.getElementById("admin-section-title").textContent = title;
   }
 
   function navigate(path) {
@@ -266,6 +272,163 @@
         ${listPanel("Zadnje isplate", state.payments.slice(0, 5).map((item) => [getEmployee(item.employee_id)?.name || "Radnik", dateFormatter.format(new Date(`${item.paid_at}T12:00:00`)), currency.format(item.amount)]), "Nema isplata.")}
         ${listPanel("Zadnji dokumenti", state.files.slice(0, 5).map((item) => [item.original_file_name || item.file_name, getProject(item.project_id)?.title || "Projekt", formatBytes(item.compressed_size_bytes || item.file_size_bytes)]), "Nema dokumenata.")}
       </div>`;
+  }
+
+  function renderWebsiteDashboard() {
+    const company = window.COMPANY_DATA || {};
+    const reviews = window.REVIEWS_DATA || [];
+    app.innerHTML = pageHead(
+      "UPRAVLJANJE JAVNOM STRANICOM",
+      "Web stranica",
+      "Projekti za portfolio, recenzije i centralni podaci firme odvojeni su od privatnog Organizera.",
+      '<a class="button button-dark" href="/" target="_blank" rel="noopener">Pregledaj javnu stranicu ↗</a>'
+    ) +
+      `<div class="org-grid">
+        ${stat(state.websiteProjects.length, "Projekti na webu", true)}
+        ${stat(state.websiteProjects.filter((item) => item.featured).length, "Istaknuti projekti")}
+        ${stat(reviews.length, "Demo recenzije")}
+        ${stat(company.services?.length || 0, "Objavljene usluge")}
+      </div>
+      <div class="org-panels">
+        ${listPanel(
+          "Projekti za web",
+          state.websiteProjects.slice(0, 5).map((item) => [
+            item.title,
+            `${item.location || "Bez lokacije"} · ${item.category}`,
+            item.featured ? "Istaknuto" : item.status
+          ]),
+          "Nema web projekata."
+        )}
+        <section class="org-card">
+          <div class="org-card-head"><h2>Brze akcije</h2></div>
+          <div class="org-list">
+            <a class="org-list-item" data-route="/admin/web/projekti" href="/admin/web/projekti"><span><strong>Upravljaj projektima</strong><small>Dodavanje, uređivanje i brisanje javnog portfolija</small></span><strong>→</strong></a>
+            <a class="org-list-item" data-route="/admin/web/recenzije" href="/admin/web/recenzije"><span><strong>Pregledaj recenzije</strong><small>Trenutni demo zapisi prikazani na naslovnici</small></span><strong>→</strong></a>
+            <a class="org-list-item" data-route="/admin/web/sadrzaj" href="/admin/web/sadrzaj"><span><strong>Podaci firme</strong><small>Kontakt, adresa, usluge i radno vrijeme</small></span><strong>→</strong></a>
+          </div>
+        </section>
+      </div>`;
+  }
+
+  function renderWebsiteProjects() {
+    app.innerHTML = pageHead(
+      "JAVNI PORTFOLIO",
+      "Projekti za web",
+      "Ovi projekti prikazuju se na javnoj stranici. Privatni Organizer projekti ostaju potpuno odvojeni.",
+      '<button class="button button-dark" data-action="new-website-project">+ Novi web projekt</button>'
+    ) +
+      `<div class="org-toolbar"><input type="search" id="website-project-search" placeholder="Pretraži web projekte…"><select id="website-project-category"><option value="">Sve kategorije</option>${[...new Set(state.websiteProjects.map((item) => item.category))].map((value) => `<option>${esc(value)}</option>`).join("")}</select></div>
+      <div class="org-table-wrap"><table class="org-table"><thead><tr><th>Projekt</th><th>Kategorija</th><th>Lokacija</th><th>Status</th><th>Istaknuto</th><th>Redoslijed</th><th>Akcije</th></tr></thead><tbody id="website-project-rows"></tbody></table></div>`;
+    drawWebsiteProjectRows();
+  }
+
+  function drawWebsiteProjectRows() {
+    const target = document.getElementById("website-project-rows");
+    if (!target) return;
+    const query = document.getElementById("website-project-search")?.value.toLowerCase().trim() || "";
+    const category = document.getElementById("website-project-category")?.value || "";
+    const rows = state.websiteProjects.filter((project) =>
+      [project.title, project.location, project.category].some((value) => String(value || "").toLowerCase().includes(query)) &&
+      (!category || project.category === category)
+    );
+    target.innerHTML = rows.length ? rows.map((project) => `<tr>
+      <td><div class="table-project"><img src="/${esc(project.image)}" alt=""><strong>${esc(project.title)}</strong></div></td>
+      <td>${esc(project.category)}</td><td>${esc(project.location || "—")}</td><td><span class="status-badge status-active">${esc(project.status)}</span></td>
+      <td>${project.featured ? "Da" : "Ne"}</td><td>${project.sort_order}</td>
+      <td><div class="org-table-actions"><a class="org-icon-button" href="/project-detail.html?project=${encodeURIComponent(project.slug)}" target="_blank" rel="noopener">Pregled</a><button class="org-icon-button" data-edit-website-project="${project.id}">Uredi</button><button class="org-icon-button danger" data-delete-website-project="${project.id}">Briši</button></div></td>
+    </tr>`).join("") : `<tr><td colspan="7">${empty("Nema web projekata za odabrani filter.")}</td></tr>`;
+  }
+
+  function websiteProjectModal(project) {
+    openModal({
+      title: project ? "Uredi web projekt" : "Novi web projekt",
+      eyebrow: "JAVNA WEB STRANICA",
+      fields:
+        field("Naslov", "title", project?.title, { required: true, full: true }) +
+        field("Slug / URL", "slug", project?.slug, { full: true }) +
+        field("Kategorija", "category", project?.category || "Iskopi", { type: "select", choices: ["Iskopi", "Rušenja", "Uređenje terena", "Odvoz"].map((value) => [value, value]) }) +
+        field("Lokacija", "location", project?.location, { required: true }) +
+        field("Status", "status", project?.status || "Dovršeno") +
+        field("Godina / datum", "project_date", project?.project_date || String(new Date().getFullYear()) + ".") +
+        field("Istaknuti projekt", "featured", String(project?.featured ?? false), { type: "select", choices: [["false", "Ne"], ["true", "Da"]] }) +
+        field("Redoslijed", "sort_order", project?.sort_order ?? state.websiteProjects.length + 1, { type: "number", min: 0, step: "1" }) +
+        field("Naslovna slika", "image", project?.image || "images/hero.jpeg", { required: true, full: true }) +
+        field("Kratki opis", "excerpt", project?.excerpt, { type: "textarea", required: true, full: true }) +
+        field("Puni opis", "description", project?.description, { type: "textarea", required: true, full: true, rows: 5 }) +
+        field("Galerija (putanje odvojene zarezom)", "gallery", (project?.gallery || []).join(", "), { type: "textarea", full: true }) +
+        field("Mehanizacija (odvojeno zarezom)", "equipment", (project?.equipment || []).join(", "), { full: true }) +
+        field("Tehničke stavke (odvojeno zarezom)", "specs", (project?.specs || []).join(", "), { full: true }),
+      submit: async (data) => {
+        const splitList = (name) => String(data.get(name) || "").split(",").map((item) => item.trim()).filter(Boolean);
+        const title = formValue(data, "title");
+        const generatedSlug = title.toLowerCase()
+          .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+          .replace(/đ/g, "d").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+        const payload = {
+          title,
+          slug: formValue(data, "slug") || generatedSlug,
+          category: data.get("category"),
+          location: formValue(data, "location") || null,
+          status: formValue(data, "status") || "Dovršeno",
+          project_date: formValue(data, "project_date") || null,
+          featured: data.get("featured") === "true",
+          sort_order: Number(data.get("sort_order") || 0),
+          image: formValue(data, "image"),
+          excerpt: formValue(data, "excerpt") || null,
+          description: formValue(data, "description") || null,
+          gallery: splitList("gallery"),
+          equipment: splitList("equipment"),
+          specs: splitList("specs")
+        };
+        const query = project
+          ? client.from("website_projects").update(payload).eq("id", project.id)
+          : client.from("website_projects").insert(payload);
+        const { error } = await query;
+        if (error) throw error;
+      }
+    });
+  }
+
+  function renderWebsiteReviews() {
+    const reviews = window.REVIEWS_DATA || [];
+    app.innerHTML = pageHead(
+      "JAVNI SADRŽAJ",
+      "Recenzije",
+      "Trenutne recenzije su demo podaci i zato su na javnoj stranici jasno označene."
+    ) +
+      `<div class="org-panels">${reviews.map((review) => `<article class="org-card">
+        <div class="org-card-head"><h2>${esc(review.name)}</h2><span class="review-stars">${"★".repeat(review.rating)}${"☆".repeat(5 - review.rating)}</span></div>
+        <p>${esc(review.text)}</p><small>${esc(review.source)} · DEMO</small>
+      </article>`).join("") || empty("Nema recenzija.")}</div>
+      <section class="org-card" style="margin-top:1.25rem"><p><strong>Gdje ih mijenjaš:</strong> <code>data/reviews-data.js</code>. Recenzije još nisu povezane s Google profilom niti zasebnom bazom.</p></section>`;
+  }
+
+  function renderWebsiteContent() {
+    const company = window.COMPANY_DATA || {};
+    const rows = [
+      ["Naziv", company.name],
+      ["Pravni naziv", company.legalName],
+      ["Telefon", company.phone],
+      ["E-mail", company.email],
+      ["Adresa", company.address],
+      ["Područje rada", company.serviceArea],
+      ["Radno vrijeme", company.workingHours],
+      ["OIB", company.oib]
+    ];
+    app.innerHTML = pageHead(
+      "CENTRALNI PODACI",
+      "Podaci firme",
+      "Pregled podataka koji se koriste na javnoj stranici."
+    ) +
+      `<section class="org-card">
+        <div class="org-card-head"><h2>Kontakt i pravni podaci</h2></div>
+        ${rows.map(([label, value]) => `<div class="org-list-item"><span>${esc(label)}</span><strong>${esc(value || "Nije uneseno")}</strong></div>`).join("")}
+      </section>
+      <div class="org-panels">
+        ${listPanel("Usluge", (company.services || []).map((item) => [item.title, item.text, item.number]), "Nema usluga.")}
+        ${listPanel("Mehanizacija", (company.equipment || []).map((item) => [item.title, item.text, item.tag]), "Nema mehanizacije.")}
+      </div>
+      <section class="org-card" style="margin-top:1.25rem"><p><strong>Gdje ih mijenjaš:</strong> <code>data/company-data.js</code>. Vrijednosti <code>DODATI_STVARNU_ADRESU</code> i <code>DODATI_STVARNI_OIB</code> još treba zamijeniti stvarnim podacima.</p></section>`;
   }
 
   function stat(value, label, highlight = false) {
@@ -922,7 +1085,13 @@
 
   async function renderRoute() {
     setActiveRoute();
-    const path = location.pathname.replace(/\/+$/, "") || "/admin/organizer";
+    const path = location.pathname.replace(/\/+$/, "") || "/admin/web";
+    if (path === "/admin" || path.startsWith("/admin/web")) setAdminSection("Upravljanje web stranicom");
+    else setAdminSection("Organizer");
+    if (path === "/admin" || path === "/admin/web") return renderWebsiteDashboard();
+    if (path.startsWith("/admin/web/projekti")) return renderWebsiteProjects();
+    if (path.startsWith("/admin/web/recenzije")) return renderWebsiteReviews();
+    if (path.startsWith("/admin/web/sadrzaj")) return renderWebsiteContent();
     if (path === "/admin/organizer/mitarbeiter/new") {
       renderEmployees();
       employeeModal();
@@ -968,6 +1137,7 @@
       leaveFormRoute();
       return renderRoute();
     }
+    if (event.target.closest('[data-action="new-website-project"]')) return websiteProjectModal();
     if (event.target.closest('[data-action="new-employee"]')) return navigate("/admin/organizer/mitarbeiter/new");
     if (event.target.closest('[data-action="new-project"]')) return navigate("/admin/organizer/projekte/new");
     if (event.target.closest('[data-action="new-payment"]')) return paymentModal();
@@ -986,6 +1156,15 @@
     }
     const deleteEmployee = event.target.closest("[data-delete-employee]");
     if (deleteEmployee) return removeRecord("employees", deleteEmployee.dataset.deleteEmployee, "radnika");
+
+    const editWebsiteProject = event.target.closest("[data-edit-website-project]");
+    if (editWebsiteProject) {
+      return websiteProjectModal(state.websiteProjects.find((item) => item.id === Number(editWebsiteProject.dataset.editWebsiteProject)));
+    }
+    const deleteWebsiteProject = event.target.closest("[data-delete-website-project]");
+    if (deleteWebsiteProject) {
+      return removeRecord("website_projects", Number(deleteWebsiteProject.dataset.deleteWebsiteProject), "web projekt");
+    }
 
     const viewProject = event.target.closest("[data-view-project]");
     if (viewProject) return navigate(`/admin/organizer/projekte/${viewProject.dataset.viewProject}`);
@@ -1032,10 +1211,12 @@
   });
 
   document.addEventListener("input", (event) => {
+    if (event.target.id === "website-project-search") drawWebsiteProjectRows();
     if (event.target.id === "employee-search") drawEmployeeRows();
     if (event.target.id === "project-search") drawProjectRows();
   });
   document.addEventListener("change", (event) => {
+    if (event.target.id === "website-project-category") drawWebsiteProjectRows();
     if (event.target.id === "employee-status") drawEmployeeRows();
     if (event.target.id === "project-status") drawProjectRows();
   });

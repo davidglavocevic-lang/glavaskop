@@ -104,6 +104,10 @@ npx web-push generate-vapid-keys
 
 ```text
 /admin/login
+/admin/web
+/admin/web/projekti
+/admin/web/recenzije
+/admin/web/sadrzaj
 /admin/organizer
 /admin/organizer/kalendar
 /admin/organizer/mitarbeiter
@@ -117,7 +121,8 @@ npx web-push generate-vapid-keys
 ## Podaci javne stranice
 
 - Podaci firme, kontakt i usluge: `data/company-data.js`
-- Javni projekti: `data/projects-data.js`
+- Javni projekti: Supabase tablica `website_projects`, uređivanje na `/admin/web/projekti`
+- `data/projects-data.js` ostaje fallback ako Supabase privremeno nije dostupan
 - Demo recenzije: `data/reviews-data.js`
 - Fotografije: `images/`
 

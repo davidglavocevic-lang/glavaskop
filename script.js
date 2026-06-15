@@ -2,7 +2,7 @@
   "use strict";
 
   const company = window.COMPANY_DATA || {};
-  const projects = window.PROJECTS_DATA || [];
+  let projects = window.PROJECTS_DATA || [];
   const reviews = window.REVIEWS_DATA || [];
   const page = document.body.dataset.page || "";
 
@@ -13,6 +13,30 @@
       .replaceAll(">", "&gt;")
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#039;");
+
+  async function loadWebsiteProjects() {
+    try {
+      const configResponse = await fetch("/api/config");
+      if (!configResponse.ok) return;
+      const config = await configResponse.json();
+      const response = await fetch(
+        `${config.supabaseUrl}/rest/v1/website_projects?select=*&order=sort_order.asc,created_at.asc`,
+        { headers: { apikey: config.supabaseAnonKey } }
+      );
+      if (!response.ok) return;
+      const remoteProjects = await response.json();
+      if (!Array.isArray(remoteProjects) || !remoteProjects.length) return;
+      projects = remoteProjects.map((project) => ({
+        ...project,
+        date: project.project_date,
+        gallery: Array.isArray(project.gallery) ? project.gallery : [],
+        equipment: Array.isArray(project.equipment) ? project.equipment : [],
+        specs: Array.isArray(project.specs) ? project.specs : []
+      }));
+    } catch (error) {
+      console.warn("Web projekti koriste lokalni fallback.", error);
+    }
+  }
 
   function hydrateCompanyData() {
     document.querySelectorAll("[data-company]").forEach((element) => {
@@ -354,13 +378,18 @@
     elements.forEach((element) => observer.observe(element));
   }
 
-  renderSharedLayout();
-  hydrateCompanyData();
+  async function initialize() {
+    await loadWebsiteProjects();
+    renderSharedLayout();
+    hydrateCompanyData();
 
-  if (page === "home") renderHome();
-  if (page === "projects") renderProjects();
-  if (page === "project-detail") renderProjectDetail();
-  if (page === "contact") setupContactForm();
+    if (page === "home") renderHome();
+    if (page === "projects") renderProjects();
+    if (page === "project-detail") renderProjectDetail();
+    if (page === "contact") setupContactForm();
 
-  initReveal();
+    initReveal();
+  }
+
+  initialize();
 })();

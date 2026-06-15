@@ -4,6 +4,8 @@
   "rewrites": [
     { "source": "/admin", "destination": "/organizer" },
     { "source": "/admin/login", "destination": "/admin-login" },
+    { "source": "/admin/web", "destination": "/organizer" },
+    { "source": "/admin/web/:path*", "destination": "/organizer" },
     { "source": "/admin/organizer", "destination": "/organizer" },
     { "source": "/admin/organizer/:path*", "destination": "/organizer" }
   ],

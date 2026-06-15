@@ -12,7 +12,7 @@
     const client = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
     const { data } = await client.auth.getSession();
     if (data.session) {
-      location.replace("/admin/organizer");
+      location.replace("/admin/web");
       return;
     }
 
@@ -32,7 +32,7 @@
         button.innerHTML = "Prijavi se <span>↗</span>";
         return;
       }
-      location.replace("/admin/organizer");
+      location.replace("/admin/web");
     });
   } catch (error) {
     errorNode.textContent = error.message;

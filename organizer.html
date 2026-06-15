@@ -18,16 +18,18 @@
       <a class="brand light-brand" href="/"><span class="brand-mark">GK</span><span><strong>GLAVAŠ</strong><small>KOP</small></span></a>
       <nav class="admin-nav" aria-label="Admin navigacija">
         <p class="nav-group-label">WEB STRANICA</p>
-        <a class="admin-nav-item" href="/projects.html"><span>01</span>Projekti za web</a>
-        <a class="admin-nav-item" href="/"><span>02</span>Otvori stranicu</a>
+        <a class="admin-nav-item" data-route="/admin/web" href="/admin/web"><span>01</span>Pregled stranice</a>
+        <a class="admin-nav-item" data-route="/admin/web/projekti" href="/admin/web/projekti"><span>02</span>Projekti za web</a>
+        <a class="admin-nav-item" data-route="/admin/web/recenzije" href="/admin/web/recenzije"><span>03</span>Recenzije</a>
+        <a class="admin-nav-item" data-route="/admin/web/sadrzaj" href="/admin/web/sadrzaj"><span>04</span>Podaci firme</a>
         <p class="nav-group-label">ORGANIZER</p>
-        <a class="admin-nav-item" data-route="/admin/organizer" href="/admin/organizer"><span>03</span>Pregled</a>
-        <a class="admin-nav-item" data-route="/admin/organizer/kalendar" href="/admin/organizer/kalendar"><span>04</span>Kalendar</a>
-        <a class="admin-nav-item" data-route="/admin/organizer/mitarbeiter" href="/admin/organizer/mitarbeiter"><span>05</span>Radnici</a>
-        <a class="admin-nav-item" data-route="/admin/organizer/projekte" href="/admin/organizer/projekte"><span>06</span>Interni projekti</a>
-        <a class="admin-nav-item" data-route="/admin/organizer/isplate" href="/admin/organizer/isplate"><span>07</span>Isplate</a>
-        <a class="admin-nav-item" data-route="/admin/organizer/nacrti" href="/admin/organizer/nacrti"><span>08</span>Nacrti / dokumenti</a>
-        <a class="admin-nav-item" data-route="/admin/organizer/troskovi" href="/admin/organizer/troskovi"><span>09</span>Troškovi</a>
+        <a class="admin-nav-item" data-route="/admin/organizer" href="/admin/organizer"><span>05</span>Pregled</a>
+        <a class="admin-nav-item" data-route="/admin/organizer/kalendar" href="/admin/organizer/kalendar"><span>06</span>Kalendar</a>
+        <a class="admin-nav-item" data-route="/admin/organizer/mitarbeiter" href="/admin/organizer/mitarbeiter"><span>07</span>Radnici</a>
+        <a class="admin-nav-item" data-route="/admin/organizer/projekte" href="/admin/organizer/projekte"><span>08</span>Interni projekti</a>
+        <a class="admin-nav-item" data-route="/admin/organizer/isplate" href="/admin/organizer/isplate"><span>09</span>Isplate</a>
+        <a class="admin-nav-item" data-route="/admin/organizer/nacrti" href="/admin/organizer/nacrti"><span>10</span>Nacrti / dokumenti</a>
+        <a class="admin-nav-item" data-route="/admin/organizer/troskovi" href="/admin/organizer/troskovi"><span>11</span>Troškovi</a>
       </nav>
       <div class="admin-sidebar-footer">
         <button id="push-toggle">Uključi obavijesti</button>
@@ -38,7 +40,7 @@
     <main class="admin-main">
       <header class="admin-topbar">
         <button class="admin-menu-toggle" id="admin-menu-toggle" aria-label="Otvori admin izbornik">☰</button>
-        <div><small>GLAVAŠ KOP</small><strong>Organizer</strong></div>
+        <div><small>GLAVAŠ KOP</small><strong id="admin-section-title">Admin panel</strong></div>
         <span class="admin-user" id="admin-user">Učitavanje…</span>
       </header>
       <div class="admin-content organizer-content" id="organizer-app">
@@ -62,6 +64,8 @@
       </div>
     </form>
   </dialog>
+  <script src="/data/company-data.js"></script>
+  <script src="/data/reviews-data.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/organizer.js"></script>
 </body>

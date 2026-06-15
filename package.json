@@ -4,7 +4,7 @@
   "private": true,
   "description": "GLAVASKOP public website and private Supabase Organizer",
   "scripts": {
-    "check": "node --check organizer.js && node --check admin-login.js && node --check sw.js && node --check api/config.js && node --check api/push/subscribe.js && node --check api/push/unsubscribe.js && node --check api/push/test.js && node --check api/cron/send-reminders.js"
+    "check": "node --check script.js && node --check organizer.js && node --check admin-login.js && node --check sw.js && node --check api/config.js && node --check api/push/subscribe.js && node --check api/push/unsubscribe.js && node --check api/push/test.js && node --check api/cron/send-reminders.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.50.0",
