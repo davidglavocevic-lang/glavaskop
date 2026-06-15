@@ -2,10 +2,10 @@
   "cleanUrls": true,
   "trailingSlash": false,
   "rewrites": [
-    { "source": "/admin", "destination": "/organizer.html" },
-    { "source": "/admin/login", "destination": "/admin-login.html" },
-    { "source": "/admin/organizer", "destination": "/organizer.html" },
-    { "source": "/admin/organizer/:path*", "destination": "/organizer.html" }
+    { "source": "/admin", "destination": "/organizer" },
+    { "source": "/admin/login", "destination": "/admin-login" },
+    { "source": "/admin/organizer", "destination": "/organizer" },
+    { "source": "/admin/organizer/:path*", "destination": "/organizer" }
   ],
   "crons": [
     {
