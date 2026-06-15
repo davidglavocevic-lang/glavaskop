@@ -46,6 +46,7 @@
         </section>
       </nav>
       <div class="admin-sidebar-footer">
+        <button class="handbook-button" id="open-handbook"><span>?</span> Priručnik za korištenje</button>
         <button id="push-toggle">Uključi obavijesti</button>
         <button id="change-password">Promijeni lozinku</button>
         <button id="admin-logout">Odjava</button>
@@ -77,6 +78,88 @@
         <button class="button button-dark" type="submit">Spremi</button>
       </div>
     </form>
+  </dialog>
+  <dialog class="handbook-dialog" id="handbook-dialog">
+    <div class="handbook-head">
+      <div><small>GLAVAŠ KOP ADMIN</small><h2>Priručnik za korištenje</h2><p>Kratke upute za siguran rad bez zabune i neželjenih promjena.</p></div>
+      <button class="modal-close" id="close-handbook" type="button" aria-label="Zatvori priručnik">×</button>
+    </div>
+    <div class="handbook-start">
+      <strong>Najvažnije pravilo</strong>
+      <p><b>Web stranica</b> upravlja javnim sadržajem koji vide posjetitelji. <b>Organizer</b> sadrži privatne poslovne podatke koji se nikada ne prikazuju javno.</p>
+    </div>
+    <div class="handbook-sections">
+      <details open>
+        <summary><span>01</span> Web stranica i javni projekti</summary>
+        <div>
+          <p>U dijelu <b>WEB</b> uređuješ sadržaj javne stranice.</p>
+          <ul>
+            <li><b>Projekti za web:</b> dodani projekt odmah može biti prikazan posjetiteljima.</li>
+            <li><b>Istaknuti projekt:</b> prikazuje se i na početnoj stranici.</li>
+            <li><b>Pregled:</b> prije završetka otvori javni projekt i provjeri tekst, sliku i lokaciju.</li>
+          </ul>
+          <p class="handbook-warning">Ne upisuj cijene, privatne napomene, isplate ni podatke radnika u web projekte.</p>
+        </div>
+      </details>
+      <details>
+        <summary><span>02</span> Interni projekti</summary>
+        <div>
+          <p>Interni projekt služi samo za poslovnu evidenciju. Može sadržavati cijenu, mjere, radnike, troškove, slike i dokumente.</p>
+          <ul>
+            <li>Dužina × širina automatski daje površinu.</li>
+            <li>Dužina × širina × dubina daje volumen iskopa.</li>
+            <li>Status redovito promijeni iz Planirano u Aktivno, Završeno ili Plaćeno.</li>
+          </ul>
+        </div>
+      </details>
+      <details>
+        <summary><span>03</span> Slike, glavna fotografija i PDF</summary>
+        <div>
+          <ul>
+            <li>Slike se prije uploada automatski smanjuju i komprimiraju.</li>
+            <li><b>Postavi kao glavnu</b> znači da će slika biti veliki pregled internog projekta.</li>
+            <li>Glavna fotografija se ne objavljuje automatski na javnoj web stranici.</li>
+            <li>PDF dokument može imati najviše 20 MB.</li>
+            <li>Datoteke su privatne i otvaraju se privremenim sigurnim linkom.</li>
+          </ul>
+          <p class="handbook-warning">Pričekaj poruku o uspješnom uploadu prije zatvaranja stranice.</p>
+        </div>
+      </details>
+      <details>
+        <summary><span>04</span> Radnici, zarada i isplate</summary>
+        <div>
+          <ul>
+            <li>Prvo dodaj radnika, zatim ga poveži s internim projektom.</li>
+            <li>Upiši dogovoreni iznos ili odrađene sate. Ako nema dogovorenog iznosa, koristi se satnica.</li>
+            <li>Isplatu evidentiraj tek kada je stvarno izvršena.</li>
+            <li>Isplatu možeš povezati s projektom ili ostaviti kao opću isplatu.</li>
+          </ul>
+        </div>
+      </details>
+      <details>
+        <summary><span>05</span> Kalendar i podsjetnici</summary>
+        <div>
+          <ul>
+            <li>Termin može biti povezan s projektom i radnikom.</li>
+            <li>Zadani podsjetnik je 15 minuta prije početka.</li>
+            <li>Za browser obavijesti klikni <b>Uključi obavijesti</b> i dopusti ih u pregledniku.</li>
+            <li>Otkazan termin označi statusom Otkazano kako se podsjetnik ne bi slao.</li>
+          </ul>
+        </div>
+      </details>
+      <details>
+        <summary><span>06</span> Brisanje i sigurnost</summary>
+        <div>
+          <ul>
+            <li>Brisanje je trajno. Prije potvrde provjeri naziv zapisa.</li>
+            <li>Ne dijeli administratorsku lozinku i redovito je promijeni.</li>
+            <li>Nakon rada na tuđem uređaju obavezno klikni Odjava.</li>
+            <li>Privatne poslovne dokumente dodaj samo u Organizer, ne u web portfolio.</li>
+          </ul>
+        </div>
+      </details>
+    </div>
+    <div class="handbook-footer"><button class="button button-dark" id="handbook-done" type="button">Razumijem, zatvori</button></div>
   </dialog>
   <script src="/data/company-data.js"></script>
   <script src="/data/reviews-data.js"></script>

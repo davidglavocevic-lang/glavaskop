@@ -82,6 +82,33 @@
 .form-section-title { grid-column: 1 / -1; border-bottom: 2px solid var(--org-ink); padding: 1rem 0 .45rem; font: 800 1.3rem "Barlow Condensed", sans-serif; text-transform: uppercase; }
 .calculation-preview { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: .7rem; padding: .8rem; background: #fff7d0; border: 1px solid #b79200; }
 .form-error { color: var(--org-danger); min-height: 1.3em; }
+.admin-sidebar-footer .handbook-button { display: flex; align-items: center; gap: .55rem; margin-bottom: .35rem; color: #fff; font-weight: 700; }
+.handbook-button span { display: grid; place-items: center; width: 23px; height: 23px; color: var(--org-ink); background: var(--org-yellow); font-weight: 900; }
+.handbook-dialog { width: min(820px, calc(100% - 2rem)); max-height: calc(100vh - 2rem); padding: 0; border: 2px solid var(--org-ink); box-shadow: 10px 10px 0 rgb(0 0 0 / .35); overflow: auto; }
+.handbook-dialog::backdrop { background: rgb(0 0 0 / .72); }
+.handbook-head { position: sticky; z-index: 2; top: 0; display: flex; justify-content: space-between; gap: 1rem; padding: 1.35rem; color: #fff; background: var(--org-ink); }
+.handbook-head small { color: var(--org-yellow); font-size: .62rem; font-weight: 800; letter-spacing: .12em; }
+.handbook-head h2 { margin: .2rem 0; color: #fff; font: 800 2rem/1 "Barlow Condensed", sans-serif; text-transform: uppercase; }
+.handbook-head p { margin: .35rem 0 0; color: #bbb9ae; font-size: .8rem; }
+.handbook-head .modal-close { color: #fff; border-color: #666; }
+.handbook-start { margin: 1.25rem; padding: 1rem; border: 2px solid var(--org-ink); background: var(--org-yellow); }
+.handbook-start strong { font: 800 1.15rem "Barlow Condensed", sans-serif; text-transform: uppercase; }
+.handbook-start p { margin: .35rem 0 0; font-size: .82rem; }
+.handbook-sections { display: grid; gap: .65rem; padding: 0 1.25rem 1.25rem; }
+.handbook-sections details { border: 1px solid var(--org-line); background: #fff; }
+.handbook-sections details[open] { border: 2px solid var(--org-ink); }
+.handbook-sections summary { display: flex; align-items: center; gap: .75rem; padding: .9rem; font-weight: 800; cursor: pointer; list-style: none; }
+.handbook-sections summary::-webkit-details-marker { display: none; }
+.handbook-sections summary::after { content: "+"; margin-left: auto; font-size: 1.2rem; }
+.handbook-sections details[open] summary { color: #fff; background: var(--org-ink); }
+.handbook-sections details[open] summary::after { content: "−"; color: var(--org-yellow); }
+.handbook-sections summary span { color: #8a6c00; font-family: "Barlow Condensed", sans-serif; }
+.handbook-sections details[open] summary span { color: var(--org-yellow); }
+.handbook-sections details > div { padding: .2rem 1rem 1rem; color: #3f3e39; font-size: .82rem; }
+.handbook-sections ul { margin: .65rem 0 0; padding-left: 1.2rem; }
+.handbook-sections li { margin: .42rem 0; }
+.handbook-warning { padding: .7rem; border-left: 5px solid var(--org-yellow); background: #fff7d0; font-weight: 700; }
+.handbook-footer { position: sticky; bottom: 0; display: flex; justify-content: flex-end; padding: 1rem 1.25rem; border-top: 1px solid var(--org-line); background: #f5f4ef; }
 
 .calendar-shell { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 1.2rem; }
 .calendar-main, .calendar-side { background: #fff; border: 2px solid var(--org-ink); box-shadow: 5px 5px 0 var(--org-ink); padding: 1rem; }

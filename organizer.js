@@ -1303,6 +1303,13 @@
 
   window.addEventListener("popstate", renderRoute);
   document.getElementById("admin-menu-toggle").addEventListener("click", () => document.getElementById("organizer-sidebar").classList.toggle("open"));
+  const handbookDialog = document.getElementById("handbook-dialog");
+  document.getElementById("open-handbook").addEventListener("click", () => handbookDialog.showModal());
+  document.getElementById("close-handbook").addEventListener("click", () => handbookDialog.close());
+  document.getElementById("handbook-done").addEventListener("click", () => handbookDialog.close());
+  handbookDialog.addEventListener("click", (event) => {
+    if (event.target === handbookDialog) handbookDialog.close();
+  });
   document.getElementById("push-toggle").addEventListener("click", enablePush);
   document.getElementById("change-password").addEventListener("click", passwordModal);
   document.getElementById("modal-delete").addEventListener("click", async () => {
