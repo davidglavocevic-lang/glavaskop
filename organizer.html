@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="hr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#171713">
+  <title>Organizer | GLAVAŠ KOP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/organizer.css">
+</head>
+<body class="admin-body organizer-body">
+  <div class="admin-shell">
+    <aside class="admin-sidebar organizer-sidebar" id="organizer-sidebar">
+      <a class="brand light-brand" href="/"><span class="brand-mark">GK</span><span><strong>GLAVAŠ</strong><small>KOP</small></span></a>
+      <nav class="admin-nav" aria-label="Admin navigacija">
+        <p class="nav-group-label">WEB STRANICA</p>
+        <a class="admin-nav-item" href="/projects.html"><span>01</span>Projekti za web</a>
+        <a class="admin-nav-item" href="/"><span>02</span>Otvori stranicu</a>
+        <p class="nav-group-label">ORGANIZER</p>
+        <a class="admin-nav-item" data-route="/admin/organizer" href="/admin/organizer"><span>03</span>Pregled</a>
+        <a class="admin-nav-item" data-route="/admin/organizer/kalendar" href="/admin/organizer/kalendar"><span>04</span>Kalendar</a>
+        <a class="admin-nav-item" data-route="/admin/organizer/mitarbeiter" href="/admin/organizer/mitarbeiter"><span>05</span>Radnici</a>
+        <a class="admin-nav-item" data-route="/admin/organizer/projekte" href="/admin/organizer/projekte"><span>06</span>Interni projekti</a>
+        <a class="admin-nav-item" data-route="/admin/organizer/isplate" href="/admin/organizer/isplate"><span>07</span>Isplate</a>
+        <a class="admin-nav-item" data-route="/admin/organizer/nacrti" href="/admin/organizer/nacrti"><span>08</span>Nacrti / dokumenti</a>
+        <a class="admin-nav-item" data-route="/admin/organizer/troskovi" href="/admin/organizer/troskovi"><span>09</span>Troškovi</a>
+      </nav>
+      <div class="admin-sidebar-footer">
+        <button id="push-toggle">Uključi obavijesti</button>
+        <button id="admin-logout">Odjava</button>
+      </div>
+    </aside>
+    <main class="admin-main">
+      <header class="admin-topbar">
+        <button class="admin-menu-toggle" id="admin-menu-toggle" aria-label="Otvori admin izbornik">☰</button>
+        <div><small>GLAVAŠ KOP</small><strong>Organizer</strong></div>
+        <span class="admin-user" id="admin-user">Učitavanje…</span>
+      </header>
+      <div class="admin-content organizer-content" id="organizer-app">
+        <section class="organizer-loading"><span></span><p>Učitavanje Organizera…</p></section>
+      </div>
+    </main>
+  </div>
+  <div class="toast-stack" id="toast-stack" aria-live="polite"></div>
+  <dialog class="admin-modal organizer-modal" id="organizer-modal">
+    <form id="organizer-form">
+      <div class="modal-head">
+        <div><small id="modal-eyebrow">ORGANIZER</small><h2 id="modal-title">Novi zapis</h2></div>
+        <button class="modal-close" type="button" data-close-modal aria-label="Zatvori">×</button>
+      </div>
+      <div id="modal-fields"></div>
+      <p class="form-error" id="modal-error" role="alert"></p>
+      <div class="modal-actions">
+        <button class="button button-ghost" id="modal-delete" type="button" hidden>Obriši</button>
+        <button class="button button-ghost" type="button" data-close-modal>Odustani</button>
+        <button class="button button-dark" type="submit">Spremi</button>
+      </div>
+    </form>
+  </dialog>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/organizer.js"></script>
+</body>
+</html>

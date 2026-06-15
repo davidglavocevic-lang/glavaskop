@@ -1,48 +1,143 @@
-# GLAVAŠ KOP web stranica
+# GLAVAŠ KOP web stranica i Organizer
 
-Profesionalna višestranična web stranica za zemljane radove, izrađena u čistom HTML-u, CSS-u i JavaScriptu bez dodatnih paketa.
+Javna višestranična web stranica i privatni poslovni Organizer povezan sa Supabase Authom, PostgreSQL bazom i privatnim Storage bucketom. Deploy je pripremljen za Vercel.
 
-## Pokretanje
+## Lokalno pokretanje
 
-Najjednostavnije je otvoriti projekt u VS Codeu i pokrenuti `index.html` ekstenzijom Live Server.
-
-Može se pokrenuti i lokalnim serverom:
+Za javne statičke stranice dovoljan je lokalni HTTP server. Organizer za rad treba Vercel serverless rutu `/api/config`, pa ga lokalno pokrenite Vercel CLI-jem:
 
 ```bash
-python3 -m http.server 8000
+npm install
+npx vercel dev
 ```
 
-Zatim otvorite `http://localhost:8000`.
+Provjera JavaScript sintakse:
 
-## Gdje se mijenjaju podaci
+```bash
+npm run check
+```
 
-- Podaci firme, kontakt, usluge i tekstovi: `data/company-data.js`
-- Projekti: `data/projects-data.js`
+## Supabase setup
+
+Koristi se postojeći projekt **GLAVASKOP Test(Web+Org)**. Ne kreirati novi Supabase projekt.
+
+1. U Supabase SQL Editoru pokrenite migraciju:
+
+```text
+supabase/migrations/20260615180000_glavaskop_organizer.sql
+```
+
+2. Migracija kreira:
+
+- `profiles`
+- `employees`
+- `internal_projects`
+- `project_workers`
+- `employee_payments`
+- `expenses`
+- `project_files`
+- `calendar_events`
+- `calendar_reminders`
+- `holidays`
+- `push_subscriptions`
+
+3. Migracija uključuje RLS na svim privatnim tablicama. Pristup imaju samo prijavljeni korisnici čiji je `profiles.role` jednak `owner` ili `admin`.
+4. Postojeći Supabase korisnik s e-mailom `davidglavocevic@gmail.com` automatski dobiva ulogu `owner`. Ako vlasnički Auth korisnik koristi drugu adresu, u SQL Editoru promijenite njegov profil:
+
+```sql
+update public.profiles
+set role = 'owner'
+where email = 'STVARNI_VLASNICKI_EMAIL';
+```
+
+Registracija nije izložena u aplikaciji. Vlasničkog korisnika kreirajte ili pozovite kroz Supabase Authentication.
+
+## Private Storage
+
+Migracija kreira privatni bucket `private-project-files` i Storage policies za owner/admin korisnike.
+
+- Slike: `projects/{project_id}/images/...`
+- Dokumenti: `projects/{project_id}/documents/...`
+- Privatne datoteke nemaju public URL.
+- Prikaz i download koriste kratkotrajni signed URL.
+- PDF limit je 20 MB.
+
+Slike se prije uploada u browseru smanjuju na najviše 2000 px, pretvaraju u WebP kada je podržan i spremaju s kvalitetom `0.75`. U `project_files` se spremaju originalna i komprimirana veličina.
+
+## Vercel environment variables
+
+Sve varijable iz [.env.example](.env.example) treba postaviti za Production, Preview i Development prema potrebi:
+
+```text
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY
+SUPABASE_SERVICE_ROLE_KEY
+NEXT_PUBLIC_SITE_URL
+CRON_SECRET
+NEXT_PUBLIC_VAPID_PUBLIC_KEY
+VAPID_PRIVATE_KEY
+VAPID_SUBJECT
+```
+
+`SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET` i `VAPID_PRIVATE_KEY` smiju se koristiti samo server-side. Nikad ih ne commitati niti slati u browser.
+
+## Push i podsjetnici
+
+Organizer uvijek provjerava podsjetnike dok je otvoren i prikazuje in-app obavijest. Uz dopuštenje preglednika koristi i Notification API.
+
+Background push koristi:
+
+- `POST /api/push/subscribe`
+- `POST /api/push/unsubscribe`
+- `POST /api/push/test`
+- `GET /api/cron/send-reminders`
+
+Cron endpoint zahtijeva `Authorization: Bearer ${CRON_SECRET}`. `vercel.json` je postavljen na provjeru svakih pet minuta. Česti cron poslovi mogu zahtijevati Vercel Pro; na Hobby planu in-app podsjetnici i dalje rade dok je Organizer otvoren.
+
+VAPID ključevi mogu se generirati naredbom:
+
+```bash
+npx web-push generate-vapid-keys
+```
+
+## Rute
+
+```text
+/admin/login
+/admin/organizer
+/admin/organizer/kalendar
+/admin/organizer/mitarbeiter
+/admin/organizer/projekte
+/admin/organizer/projekte/{id}
+/admin/organizer/isplate
+/admin/organizer/nacrti
+/admin/organizer/troskovi
+```
+
+## Podaci javne stranice
+
+- Podaci firme, kontakt i usluge: `data/company-data.js`
+- Javni projekti: `data/projects-data.js`
 - Demo recenzije: `data/reviews-data.js`
 - Fotografije: `images/`
 
-Vrijednosti `DODATI_STVARNU_ADRESU` i `DODATI_STVARNI_OIB` treba zamijeniti stvarnim podacima prije objave.
+Vrijednosti `DODATI_STVARNU_ADRESU` i `DODATI_STVARNI_OIB` treba zamijeniti stvarnim podacima.
 
-## Admin demo
+Javni projekti i demo recenzije ostaju odvojeni od privatnih Organizer podataka. Javna stranica ne dohvaća nijednu Organizer tablicu.
 
-Admin prijava dostupna je na `admin-login.html`.
+## Deploy
 
-- Korisničko ime: `demo`
-- Lozinka: `demo`
+Projekt je povezan s Vercel projektom `davidglavocevic-glavaskop`.
 
-Promjene projekata u demo adminu spremaju se samo u `localStorage` trenutnog preglednika. To nije produkcijska sigurnost ni trajna baza podataka.
-
-Za stvarni vlasnički pristup potrebno je povezati:
-
-- sigurnu backend autentikaciju, primjerice Supabase Auth
-- bazu podataka za projekte i recenzije
-- pohranu fotografija
-- serversku validaciju i pravila pristupa
-
-Stvarne lozinke ne smiju se spremati u JavaScript datoteke.
-
-## Kontakt forma i recenzije
-
-Kontakt forma validira podatke i otvara korisnikov e-mail program s pripremljenom porukom. Za automatsko slanje potrebno ju je povezati s backend servisom.
-
-Recenzije su jasno označeni demo podaci. Datoteka `data/reviews-data.js` kasnije se može zamijeniti pozivom prema vlastitom backendu koji dohvaća odobrene stvarne recenzije.
+```bash
+npx vercel link
+npx vercel env add NEXT_PUBLIC_SUPABASE_URL production
+npx vercel env add NEXT_PUBLIC_SUPABASE_ANON_KEY production
+npx vercel env add SUPABASE_SERVICE_ROLE_KEY production
+npx vercel env add NEXT_PUBLIC_SITE_URL production
+npx vercel env add CRON_SECRET production
+npx vercel env add NEXT_PUBLIC_VAPID_PUBLIC_KEY production
+npx vercel env add VAPID_PRIVATE_KEY production
+npx vercel env add VAPID_SUBJECT production
+npx vercel --prod
+```

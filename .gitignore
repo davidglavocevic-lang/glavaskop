@@ -2,3 +2,5 @@
 images/.DS_Store
 .vercel
 .env*
+!.env.example
+node_modules/

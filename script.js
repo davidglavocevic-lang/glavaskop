@@ -87,7 +87,7 @@
         </div>
         <div class="container footer-bottom">
           <span>© ${year} ${escapeHTML(company.name)}. Sva prava pridržana.</span>
-          <a href="admin-login.html">Vlasnički pristup</a>
+          <a href="/admin/login">Vlasnički pristup</a>
         </div>
       </footer>`;
   }
